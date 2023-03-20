@@ -1,0 +1,24 @@
+name: CI/CD
+
+on:
+  push:
+    branches: main
+
+jobs:
+  build-and-deploy:
+    runs-on: self-hosted
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Copy env
+        run: cp ~/.env.dressup .
+
+      - name: Build and restart docker compose
+        run: |
+          sudo docker compose -f docker-compose.prod.yml build
+          sudo docker compose -f docker-compose.prod.yml down
+          sudo docker compose -f docker-compose.prod.yml up -d
+
+      - name: Claim resource from docker
+        run: sudo docker system prune -af

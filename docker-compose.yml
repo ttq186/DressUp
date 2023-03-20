@@ -2,10 +2,10 @@ version: '3.7'
 
 services:
   app:
-    container_name: app
-    image: app_image
+    container_name: dressup_app
+    image: dressup_app_image
     env_file:
-      - .env
+      - .env.example
     build:
       context: .
       dockerfile: Dockerfile
@@ -17,7 +17,7 @@ services:
       - postgres
 
   postgres:
-    container_name: postgres
+    container_name: dressup_postgres
     hostname: app_db
     image: postgres:14.1
     environment:
@@ -29,16 +29,6 @@ services:
     ports:
       - 5432:5432
 
-  redis:
-    image: redis:6.2-alpine
-    hostname: redis
-    container_name: redis
-    command:
-      - 'redis-server'
-      - '--requirepass myStrongPassword'
-    ports:
-      - 6379:6379
-
 volumes:
   app_pg_data:
     driver: "local"
@@ -46,4 +36,4 @@ volumes:
 networks:
   default:
     external: true
-    name: app_main
+    name: dressup_app_main

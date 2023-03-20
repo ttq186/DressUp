@@ -1,15 +1,12 @@
 from typing import Any
 
-from pydantic import BaseSettings, PostgresDsn, RedisDsn
+from pydantic import BaseSettings, PostgresDsn
 
 from src.constants import Environment
 
 
 class Config(BaseSettings):
     DATABASE_URL: PostgresDsn
-    REDIS_URL: RedisDsn
-
-    SITE_DOMAIN: str = "netflox.com"
 
     ENVIRONMENT: Environment = Environment.PRODUCTION
 
@@ -22,9 +19,9 @@ class Config(BaseSettings):
 
 settings = Config()
 
-app_configs: dict[str, Any] = {"title": "Netflox API"}
+app_configs: dict[str, Any] = {"title": "DressUp API"}
 if settings.ENVIRONMENT.is_deployed:
     app_configs["root_path"] = f"/v{settings.APP_VERSION}"
 
-if not settings.ENVIRONMENT.is_debug:
-    app_configs["openapi_url"] = None  # hide docs
+# if not settings.ENVIRONMENT.is_debug:
+#     app_configs["openapi_url"] = None  # hide docs
