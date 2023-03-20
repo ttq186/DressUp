@@ -1,7 +1,7 @@
 FROM python:3.10.9-slim-buster
 
 RUN apt-get update && \
-    apt-get install -y gcc libpq-dev && \
+    apt-get install -y gcc libpq-dev git && \
     apt clean && \
     rm -rf /var/cache/apt/*
 
@@ -17,9 +17,8 @@ RUN pip install -U pip && \
 COPY . /src
 ENV PATH "$PATH:/src/scripts"
 
-RUN useradd -m -d /src -s /bin/bash app
 
 WORKDIR /src
-USER app
+RUN useradd -m -d /src -s /bin/bash app
 
 CMD ["./scripts/start-dev.sh"]

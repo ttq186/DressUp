@@ -10,6 +10,12 @@ def orjson_dumps(v: Any, *, default: Callable[[Any], Any] | None) -> str:
     return orjson.dumps(v, default=default).decode()
 
 
+def to_camel(string: str) -> str:
+    return string.split("_")[0] + "".join(
+        word.capitalize() for word in string.split("_")
+    )
+
+
 def convert_datetime_to_gmt(dt: datetime) -> str:
     if not dt.tzinfo:
         dt = dt.replace(tzinfo=ZoneInfo("UTC"))
@@ -23,6 +29,7 @@ class ORJSONModel(BaseModel):
         json_dumps = orjson_dumps
         json_encoders = {datetime: convert_datetime_to_gmt}
         allow_population_by_field_name = True
+        alias_generator = to_camel
 
     @root_validator()
     def set_null_microseconds(cls, data: dict[str, Any]) -> dict[str, Any]:
