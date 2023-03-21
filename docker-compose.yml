@@ -5,7 +5,7 @@ services:
     container_name: dressup_app
     image: dressup_app_image
     env_file:
-      - .env.example
+      - .env
     build:
       context: .
       dockerfile: Dockerfile

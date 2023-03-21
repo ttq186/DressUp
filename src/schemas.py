@@ -12,7 +12,7 @@ def orjson_dumps(v: Any, *, default: Callable[[Any], Any] | None) -> str:
 
 def to_camel(string: str) -> str:
     return string.split("_")[0] + "".join(
-        word.capitalize() for word in string.split("_")
+        word.capitalize() for word in string.split("_")[1:]
     )
 
 

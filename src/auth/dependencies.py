@@ -4,15 +4,50 @@ from databases.interfaces import Record
 from fastapi import Cookie, Depends
 
 from src.auth import service
-from src.auth.exceptions import EmailTaken, RefreshTokenNotValid
-from src.auth.schemas import AuthUser
+from src.auth.constants import AuthMethod
+from src.auth.exceptions import (
+    AccountCreatedByNormalMethod,
+    AccountCreatedViaThirdParty,
+    EmailNotRegistered,
+    EmailTaken,
+    RefreshTokenNotValid,
+)
+from src.auth.schemas import AuthUser, User, UserEmail
 
 
-async def valid_user_create(user: AuthUser) -> AuthUser:
-    if await service.get_user_by_email(user.email):
+async def valid_user(user_email: UserEmail) -> User:
+    user = await service.get_user_by_email(user_email.email)
+    if not user:
+        raise EmailNotRegistered()
+    return User(**user._mapping)
+
+
+async def valid_user_create(auth_user: AuthUser) -> AuthUser:
+    if await service.get_user_by_email(auth_user.email):
         raise EmailTaken()
+    return auth_user
 
-    return user
+
+async def valid_normal_user_create(
+    auth_user: AuthUser = Depends(valid_user_create),
+) -> AuthUser:
+    user = await service.get_user_by_email(auth_user.email)
+    if user:
+        if user["auth_method"] != AuthMethod.NORMAL:
+            raise AccountCreatedViaThirdParty()
+        raise EmailTaken()
+    return auth_user
+
+
+async def valid_oauth_user_create(
+    auth_user: AuthUser = Depends(valid_user_create),
+) -> AuthUser:
+    user = await service.get_user_by_email(auth_user.email)
+    if user:
+        if user["auth_method"] == AuthMethod.NORMAL:
+            raise AccountCreatedByNormalMethod()
+        raise EmailTaken()
+    return auth_user
 
 
 async def valid_refresh_token(

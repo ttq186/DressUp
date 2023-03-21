@@ -11,6 +11,7 @@ services:
       dockerfile: Dockerfile.prod
     volumes:
       - ./:/src
+    network_mode: host
     ports:
       - 2811:2811
 

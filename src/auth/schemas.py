@@ -1,4 +1,5 @@
 import re
+from datetime import datetime
 
 from pydantic import EmailStr, Field, validator
 
@@ -37,3 +38,28 @@ class AccessTokenResponse(ORJSONModel):
 
 class UserResponse(ORJSONModel):
     email: EmailStr
+
+
+class UserEmail(ORJSONModel):
+    email: EmailStr
+
+
+class User(ORJSONModel):
+    id: int
+    email: EmailStr
+    username: str | None
+    is_admin: bool
+    is_active: bool
+    is_activated: bool
+    auth_method: str
+    created_at: datetime
+    updated_at: datetime | None
+
+
+class UserResetPassword(ORJSONModel):
+    token: str
+    new_password: str
+
+
+class UserActivate(ORJSONModel):
+    token: str

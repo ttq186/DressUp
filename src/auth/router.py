@@ -1,14 +1,23 @@
 from databases.interfaces import Record
 from fastapi import APIRouter, BackgroundTasks, Depends, Response, status
 
-from src.auth import jwt, service, utils
+from src.auth import exceptions, jwt, service, utils
 from src.auth.dependencies import (
     valid_refresh_token,
     valid_refresh_token_user,
+    valid_user,
     valid_user_create,
 )
 from src.auth.jwt import parse_jwt_user_data
-from src.auth.schemas import AccessTokenResponse, AuthUser, JWTData, UserResponse
+from src.auth.schemas import (
+    AccessTokenResponse,
+    AuthUser,
+    JWTData,
+    User,
+    UserActivate,
+    UserResetPassword,
+    UserResponse,
+)
 
 router = APIRouter(prefix="/auth", tags=["Auth"])
 
@@ -18,9 +27,46 @@ async def register_user(
     auth_data: AuthUser = Depends(valid_user_create),
 ) -> dict[str, str]:
     user = await service.create_user(auth_data)
+    return user  # type: ignore
+
+
+@router.post("/users/activate/request")
+async def request_activate_account(
+    background_tasks: BackgroundTasks,
+    user: User = Depends(valid_user),
+) -> dict[str, str]:
+    if user.is_activated:
+        raise exceptions.AccountAlreadyActivated()
+
+    background_tasks.add_task(service.create_and_send_activate_email, user=user)
     return {
-        "email": user["email"],  # type: ignore
+        "detail": "An activate link has just been sent. Please check your email box!"
     }
+
+
+@router.post("/users/activate")
+async def activate_account(user_activate_payload: UserActivate) -> dict[str, str]:
+    await service.activate_account(user_activate_payload)
+    return {"detail": "Your account has been activated! Please sign in again!"}
+
+
+@router.post("/users/forgot-password")
+async def forgot_password(
+    background_tasks: BackgroundTasks,
+    user: User = Depends(valid_user),
+) -> dict[str, str]:
+    background_tasks.add_task(service.create_and_send_reset_password_email, user=user)
+    return {
+        "detail": "An activate link has just been sent. Please check your email box!"
+    }
+
+
+@router.post("/users/reset-password")
+async def reset_password(
+    user_reset_payload: UserResetPassword,
+) -> dict[str, str]:
+    await service.reset_password(user_reset_payload)
+    return {"detail": "Your password has been reset successfully!"}
 
 
 @router.get("/users/me", response_model=UserResponse)
