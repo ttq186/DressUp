@@ -12,7 +12,8 @@ from src.auth.exceptions import (
     EmailTaken,
     RefreshTokenNotValid,
 )
-from src.auth.schemas import AuthUser, User, UserEmail
+from src.auth.schemas import AuthUser, UserEmail
+from src.user.schemas import User
 
 
 async def valid_user(user_email: UserEmail) -> User:

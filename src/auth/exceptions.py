@@ -1,50 +1,50 @@
-from src.auth.constants import ErrorCode
+from src.auth.constants import ErrorMessage
 from src.exceptions import BadRequest, NotAuthenticated, PermissionDenied
 
 
 class AuthRequired(NotAuthenticated):
-    DETAIL = ErrorCode.AUTHENTICATION_REQUIRED
+    DETAIL = ErrorMessage.AUTHENTICATION_REQUIRED
 
 
 class AuthorizationFailed(PermissionDenied):
-    DETAIL = ErrorCode.AUTHORIZATION_FAILED
+    DETAIL = ErrorMessage.AUTHORIZATION_FAILED
 
 
 class InvalidToken(NotAuthenticated):
-    DETAIL = ErrorCode.INVALID_TOKEN
+    DETAIL = ErrorMessage.INVALID_TOKEN
 
 
 class InvalidCredentials(NotAuthenticated):
-    DETAIL = ErrorCode.INVALID_CREDENTIALS
+    DETAIL = ErrorMessage.INVALID_CREDENTIALS
 
 
 class EmailTaken(BadRequest):
-    DETAIL = ErrorCode.EMAIL_TAKEN
+    DETAIL = ErrorMessage.EMAIL_TAKEN
 
 
 class EmailNotRegistered(BadRequest):
-    DETAIL = ErrorCode.EMAIL_NOT_REGISTERED
+    DETAIL = ErrorMessage.EMAIL_NOT_REGISTERED
 
 
 class RefreshTokenNotValid(NotAuthenticated):
-    DETAIL = ErrorCode.REFRESH_TOKEN_NOT_VALID
+    DETAIL = ErrorMessage.REFRESH_TOKEN_NOT_VALID
 
 
 class AccountCreatedViaThirdParty(BadRequest):
-    DETAIL = ErrorCode.ACCOUNT_CREATED_VIA_THIRD_PARTY
+    DETAIL = ErrorMessage.ACCOUNT_CREATED_VIA_THIRD_PARTY
 
 
 class AccountCreatedByNormalMethod(BadRequest):
-    DETAIL = ErrorCode.ACCOUNT_CREATED_BY_NORMAL_METHOD
+    DETAIL = ErrorMessage.ACCOUNT_CREATED_BY_NORMAL_METHOD
 
 
 class AccountSuspended(PermissionDenied):
-    DETAIL = ErrorCode.ACCOUNT_SUSPENDED
+    DETAIL = ErrorMessage.ACCOUNT_SUSPENDED
 
 
 class AccountNotActivated(PermissionDenied):
-    DETAIL = ErrorCode.ACCOUNT_NOT_ACTIVATED
+    DETAIL = ErrorMessage.ACCOUNT_NOT_ACTIVATED
 
 
 class AccountAlreadyActivated(BadRequest):
-    DETAIL = ErrorCode.ACCOUNT_ALREADY_ACTIVATED
+    DETAIL = ErrorMessage.ACCOUNT_ALREADY_ACTIVATED

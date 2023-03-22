@@ -5,7 +5,8 @@ from sqlalchemy import engine_from_config
 from sqlalchemy import pool
 
 from src.database import metadata, DATABASE_URL
-from src.auth.database import user_tb, refresh_token_tb
+from src.auth.database import refresh_token_tb
+from src.user.database import user_tb
 
 
 

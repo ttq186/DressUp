@@ -9,37 +9,35 @@ from src import utils
 from src.auth import jwt
 from src.auth.config import auth_config
 from src.auth.constants import AuthMethod
-from src.auth.database import refresh_token_tb, user_tb
+from src.auth.database import refresh_token_tb
 from src.auth.exceptions import (
     AccountNotActivated,
     AccountSuspended,
     InvalidCredentials,
     InvalidToken,
 )
-from src.auth.schemas import AuthUser, User, UserActivate, UserResetPassword
+from src.auth.schemas import AuthUser, UserActivate, UserResetPassword
 from src.auth.security import check_password, hash_password
 from src.auth.utils import send_activate_email, send_reset_password_email
 from src.database import database
+from src.user.database import user_tb
+from src.user.schemas import User
 
 
-async def create_user(user: AuthUser) -> Record | None:
+async def create_user(user: AuthUser) -> Record:
     insert_query = (
         insert(user_tb)
         .values(
             {
                 "email": user.email,
                 "password": hash_password(user.password),
+                "auth_method": AuthMethod.NORMAL,
             }
         )
         .returning(user_tb)
     )
 
-    return await database.fetch_one(insert_query)
-
-
-async def get_user_by_id(user_id: int) -> Record | None:
-    select_query = select(user_tb).where(user_tb.c.id == user_id)
-    return await database.fetch_one(select_query)
+    return await database.fetch_one(insert_query)  # type: ignore
 
 
 async def get_user_by_email(email: str) -> Record | None:
@@ -130,7 +128,7 @@ async def authenticate_user_signed_in_via_google(id_token: str) -> Record:
 
 
 def create_and_send_activate_email(user: User) -> None:
-    username = user.username or user.email.split("@")[0]
+    username = user.full_name or user.email.split("@")[0]
     token = jwt.create_access_token(
         user=user.dict(),
         expires_delta=timedelta(minutes=15),
@@ -145,7 +143,7 @@ def create_and_send_activate_email(user: User) -> None:
 
 
 def create_and_send_reset_password_email(user: User) -> None:
-    username = user.username or user.email.split("@")[0]
+    username = user.full_name or user.email.split("@")[0]
     token = jwt.create_access_token(
         user=user.dict(),
         expires_delta=timedelta(minutes=10),
