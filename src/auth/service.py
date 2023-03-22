@@ -53,7 +53,7 @@ async def create_refresh_token(
 
     insert_query = refresh_token_tb.insert().values(
         uuid=uuid.uuid4(),
-        refresh_token=refresh_token,
+        token=refresh_token,
         expires_at=datetime.utcnow() + timedelta(seconds=auth_config.REFRESH_TOKEN_EXP),
         user_id=user_id,
     )
@@ -64,7 +64,7 @@ async def create_refresh_token(
 
 async def get_refresh_token(refresh_token: str) -> Record | None:
     select_query = refresh_token_tb.select().where(
-        refresh_token_tb.c.refresh_token == refresh_token
+        refresh_token_tb.c.token == refresh_token
     )
 
     return await database.fetch_one(select_query)

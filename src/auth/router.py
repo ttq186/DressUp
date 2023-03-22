@@ -117,5 +117,5 @@ async def logout_user(
     await service.expire_refresh_token(refresh_token["uuid"])
 
     response.delete_cookie(
-        **utils.get_refresh_token_settings(refresh_token["refresh_token"], expired=True)
+        **utils.get_refresh_token_settings(refresh_token["token"], expired=True)
     )
