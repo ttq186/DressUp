@@ -29,6 +29,11 @@ class AuthUser(ORJSONModel):
     def valid_password(cls, password: str) -> str:
         return validate_strong_password(password)
 
+
+class AuthUserViaGoogle(ORJSONModel):
+    id_token: str
+
+
 class JWTData(ORJSONModel):
     user_id: int = Field(alias="sub")
     is_admin: bool = False

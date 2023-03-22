@@ -8,11 +8,13 @@ from sqlalchemy import insert, select
 from src import utils
 from src.auth import jwt
 from src.auth.config import auth_config
+from src.auth.constants import AuthMethod
 from src.auth.database import refresh_token_tb, user_tb
 from src.auth.exceptions import (
     AccountNotActivated,
     AccountSuspended,
     InvalidCredentials,
+    InvalidToken,
 )
 from src.auth.schemas import AuthUser, User, UserActivate, UserResetPassword
 from src.auth.security import check_password, hash_password
@@ -91,6 +93,40 @@ async def authenticate_user(auth_data: AuthUser) -> Record:
     if not user["is_activated"]:
         raise AccountNotActivated()
     return user
+
+
+async def authenticate_user_signed_in_via_google(id_token: str) -> Record:
+    from google.auth.transport import _aiohttp_requests
+    from google.oauth2 import _id_token_async
+
+    try:
+        with _aiohttp_requests.Request() as request:
+            id_info = await _id_token_async.verify_oauth2_token(
+                id_token=id_token, request=request
+            )
+
+        user = await get_user_by_email(id_info["email"])
+        if not user:
+            insert_query = (
+                insert(user_tb)
+                .values(
+                    {
+                        "email": id_info["email"],
+                        "auth_method": AuthMethod.GOOGLE,
+                        "first_name": id_info["given_name"],
+                        "last_name": id_info["family_name"],
+                        "is_activated": True,
+                        "is_active": True,
+                    }
+                )
+                .returning(user_tb)
+            )
+            user = await database.fetch_one(insert_query)
+        if not user["is_active"]:  # type: ignore
+            raise AccountSuspended()
+        return user  # type: ignore
+    except Exception:
+        raise InvalidToken()
 
 
 def create_and_send_activate_email(user: User) -> None:

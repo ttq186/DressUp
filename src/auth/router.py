@@ -12,6 +12,7 @@ from src.auth.jwt import parse_jwt_user_data
 from src.auth.schemas import (
     AccessTokenResponse,
     AuthUser,
+    AuthUserViaGoogle,
     JWTData,
     User,
     UserActivate,
@@ -78,8 +79,27 @@ async def get_my_account(
 
 
 @router.post("/users/tokens", response_model=AccessTokenResponse)
-async def auth_user(auth_data: AuthUser, response: Response) -> AccessTokenResponse:
+async def login_with_normal_method(
+    auth_data: AuthUser, response: Response
+) -> AccessTokenResponse:
     user = await service.authenticate_user(auth_data)
+    refresh_token_value = await service.create_refresh_token(user_id=user["id"])
+
+    response.set_cookie(**utils.get_refresh_token_settings(refresh_token_value))
+
+    return AccessTokenResponse(
+        access_token=jwt.create_access_token(user=user),
+        refresh_token=refresh_token_value,
+    )
+
+
+@router.post("/users/tokens/google", response_model=AccessTokenResponse)
+async def login_via_google(
+    auth_user_via_google: AuthUserViaGoogle, response: Response
+) -> AccessTokenResponse:
+    user = await service.authenticate_user_signed_in_via_google(
+        id_token=auth_user_via_google.id_token
+    )
     refresh_token_value = await service.create_refresh_token(user_id=user["id"])
 
     response.set_cookie(**utils.get_refresh_token_settings(refresh_token_value))
