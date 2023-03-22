@@ -21,7 +21,7 @@ from src.user.schemas import User, UserOut
 router = APIRouter(prefix="/auth", tags=["Auth"])
 
 
-@router.post("/users", status_code=status.HTTP_201_CREATED, response_model=UserOut)
+@router.post("/users", status_code=status.HTTP_201_CREATED)
 async def register_user(
     background_tasks: BackgroundTasks,
     auth_data: AuthUser = Depends(valid_user_create),

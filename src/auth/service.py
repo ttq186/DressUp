@@ -40,6 +40,11 @@ async def create_user(user: AuthUser) -> Record:
     return await database.fetch_one(insert_query)  # type: ignore
 
 
+async def get_user_by_id(user_id: int) -> Record | None:
+    select_query = select(user_tb).where(user_tb.c.id == user_id)
+    return await database.fetch_one(select_query)
+
+
 async def get_user_by_email(email: str) -> Record | None:
     select_query = select(user_tb).where(user_tb.c.email == email)
     return await database.fetch_one(select_query)
@@ -94,14 +99,13 @@ async def authenticate_user(auth_data: AuthUser) -> Record:
 
 
 async def authenticate_user_signed_in_via_google(id_token: str) -> Record:
-    from google.auth.transport import _aiohttp_requests
-    from google.oauth2 import _id_token_async
+    from google.auth.transport import requests
+    from google.oauth2.id_token import verify_oauth2_token
+    from src.utils import logger
 
     try:
-        with _aiohttp_requests.Request() as request:
-            id_info = await _id_token_async.verify_oauth2_token(
-                id_token=id_token, request=request
-            )
+        request = requests.Request()
+        id_info = verify_oauth2_token(id_token=id_token, request=request)
 
         user = await get_user_by_email(id_info["email"])
         if not user:
@@ -123,7 +127,8 @@ async def authenticate_user_signed_in_via_google(id_token: str) -> Record:
         if not user["is_active"]:  # type: ignore
             raise AccountSuspended()
         return user  # type: ignore
-    except Exception:
+    except Exception as e:
+        logger.warning(f"Decode oauth2: {e}")
         raise InvalidToken()
 
 
@@ -134,7 +139,7 @@ def create_and_send_activate_email(user: User) -> None:
         expires_delta=timedelta(minutes=15),
         secret_key=auth_config.JWT_EXTRA_SECRET,
     )
-    activate_url = f"{auth_config.SITE_DOMAIN}/users/activate?token={token}"
+    activate_url = f"https://dress-up-stag.vercel.app/users/activate?token={token}"
     send_activate_email(
         receiver_email=user.email,
         username=username,
@@ -149,7 +154,7 @@ def create_and_send_reset_password_email(user: User) -> None:
         expires_delta=timedelta(minutes=10),
         secret_key=auth_config.JWT_EXTRA_SECRET,
     )
-    reset_url = f"{auth_config.SITE_DOMAIN}/users/reset-password?token={token}"
+    reset_url = f"https://dress-up-stag.vercel.app/users/reset-password?token={token}"
     send_reset_password_email(
         receiver_email=user.email,
         username=username,

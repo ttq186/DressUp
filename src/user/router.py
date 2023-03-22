@@ -20,4 +20,5 @@ async def update_my_profile(
     user_in: UserIn,
     jwt_data: JWTData = Depends(parse_jwt_user_data),
 ):
-    return await service.update_user(email=jwt_data.email, user_in=user_in)
+    await service.update_user(email=jwt_data.email, user_in=user_in)
+    return await service.get_user_by_id(jwt_data.user_id)

@@ -18,21 +18,19 @@ class User(ORJSONModel):
     is_active: bool | None
     is_activated: bool | None
     auth_method: AuthMethod
-    created_at: datetime
-    updated_at: datetime
+    created_at: datetime | None
+    updated_at: datetime | None
 
     @validator("full_name", always=True)
     def set_full_name(cls, v, values) -> str:
         return " ".join(
-            value for value in [values["first_name"], values["last_name"]] if value
+            value for value in [values.get("first_name"), values.get("last_name")] if value
         )
 
 
 class UserOut(User):
     id: int
     email: EmailStr
-    first_name: str
-    last_name: str
     is_admin: bool
     is_active: bool
     is_activated: bool
