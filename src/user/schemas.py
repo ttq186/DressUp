@@ -14,6 +14,11 @@ class User(ORJSONModel):
     last_name: str | None
     full_name: str | None
     gender: str | None
+    burst: int | None
+    waist: int | None
+    hip: int | None
+    weight: float | None
+    height: float | None
     is_admin: bool | None
     is_active: bool | None
     is_activated: bool | None
@@ -24,7 +29,9 @@ class User(ORJSONModel):
     @validator("full_name", always=True)
     def set_full_name(cls, v, values) -> str:
         return " ".join(
-            value for value in [values.get("first_name"), values.get("last_name")] if value
+            value
+            for value in [values.get("first_name"), values.get("last_name")]
+            if value
         )
 
 
@@ -41,6 +48,11 @@ class UserIn(ORJSONModel):
     first_name: str | None
     last_name: str | None
     gender: str | None
+    burst: int | None
+    waist: int | None
+    hip: int | None
+    weight: float | None
+    height: float | None
 
     @validator("password")
     def valid_password(cls, password: str) -> str:

@@ -21,7 +21,7 @@ class JWTData(ORJSONModel):
     user_id: int = Field(alias="sub")
     email: str
     is_admin: bool = False
-    is_activate: bool
+    is_activated: bool
     is_active: bool
 
 

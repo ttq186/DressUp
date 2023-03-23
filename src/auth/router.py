@@ -16,7 +16,7 @@ from src.auth.schemas import (
     UserActivate,
     UserResetPassword,
 )
-from src.user.schemas import User, UserOut
+from src.user.schemas import User
 
 router = APIRouter(prefix="/auth", tags=["Auth"])
 

@@ -101,6 +101,7 @@ async def authenticate_user(auth_data: AuthUser) -> Record:
 async def authenticate_user_signed_in_via_google(id_token: str) -> Record:
     from google.auth.transport import requests
     from google.oauth2.id_token import verify_oauth2_token
+
     from src.utils import logger
 
     try:
