@@ -13,6 +13,7 @@ class User(ORJSONModel):
     first_name: str | None
     last_name: str | None
     full_name: str | None
+    styles: list[str] | None
     gender: str | None
     burst: int | None
     waist: int | None
@@ -41,6 +42,7 @@ class UserOut(User):
     is_admin: bool
     is_active: bool
     is_activated: bool
+    styles: list[str] | None
 
 
 class UserIn(ORJSONModel):
@@ -48,6 +50,7 @@ class UserIn(ORJSONModel):
     first_name: str | None
     last_name: str | None
     gender: str | None
+    styles: list[str] | None
     burst: int | None
     waist: int | None
     hip: int | None

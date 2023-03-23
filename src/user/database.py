@@ -1,4 +1,5 @@
 from sqlalchemy import (
+    ARRAY,
     Boolean,
     Column,
     DateTime,
@@ -22,6 +23,7 @@ user_tb = Table(
     Column("last_name", String),
     Column("avatar_url", String),
     Column("password", LargeBinary),
+    Column("styles", ARRAY(String)),
     Column("burst", Integer),
     Column("waist", Integer),
     Column("hip", Integer),

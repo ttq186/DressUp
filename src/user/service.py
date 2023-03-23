@@ -13,7 +13,12 @@ async def get_user_by_id(user_id: int) -> Record | None:
 
 
 async def update_user(email: str, user_in: UserIn) -> None:
-    update_values = user_in.dict(exclude_unset=True)
+    update_values = user_in.dict(exclude_unset=True, exclude_none=True)
+    from src.utils import logger
+
+    logger.info(user_in.dict(exclude_unset=True, exclude_none=True))
+    # if not update_values:
+    #     return
     if user_in.password:
         update_values["password"] = hash_password(user_in.password)
     update_query = (
