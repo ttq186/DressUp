@@ -13,6 +13,8 @@ from src.auth.exceptions import (
     AccountSuspended,
     InvalidCredentials,
     InvalidToken,
+    AccountCreatedViaThirdParty,
+    AccountCreatedByNormalMethod,
 )
 from src.auth.repository import AuthRepo
 from src.auth.schemas import (
@@ -36,8 +38,12 @@ class AuthService:
 
     async def authenticate_user(self, auth_data: AuthData) -> UserData:
         user = await self.user_repo.get_by_email(auth_data.email)
+
         if not user or not await check_password(auth_data.password, user.password):
             raise InvalidCredentials()
+
+        if user.auth_method != AuthMethod.NORMAL:
+            raise AccountCreatedViaThirdParty()
 
         if not user.is_active:
             raise AccountSuspended()
@@ -61,6 +67,9 @@ class AuthService:
                     is_active=True,
                 )
                 user = await self.user_repo.create(create_data)
+
+            if user.auth_method != AuthMethod.GOOGLE:
+                raise AccountCreatedByNormalMethod()
 
             if not user.is_active:
                 raise AccountSuspended()
