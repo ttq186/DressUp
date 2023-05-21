@@ -5,7 +5,7 @@ from pydantic import BaseSettings, PostgresDsn
 from src.constants import Environment
 
 
-class Config(BaseSettings):
+class Settings(BaseSettings):
     DATABASE_URL: PostgresDsn
 
     ENVIRONMENT: Environment = Environment.PRODUCTION
@@ -17,7 +17,7 @@ class Config(BaseSettings):
     APP_VERSION: str = "1"
 
 
-settings = Config()
+settings = Settings()
 
 app_configs: dict[str, Any] = {"title": "DressUp API"}
 # if settings.ENVIRONMENT.is_deployed:

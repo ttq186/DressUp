@@ -1,27 +1,13 @@
-from databases.interfaces import Record
-from sqlalchemy import select
-
-from src.auth.security import hash_password
-from src.database import database
-from src.user.database import user_tb
-from src.user.schemas import UserIn
+from src.user.repository import UserRepo
+from src.user.schemas import UserCreate, UserData, UserUpdate
 
 
-async def get_user_by_id(user_id: int) -> Record | None:
-    select_query = select(user_tb).where(user_tb.c.id == user_id)
-    return await database.fetch_one(select_query)
+class UserService:
+    def __init__(self, user_repo: UserRepo):
+        self.user_repo = user_repo
 
+    async def create_user(self, create_data: UserCreate) -> UserData:
+        return await self.user_repo.create(create_data=create_data)
 
-async def update_user(email: str, user_in: UserIn) -> None:
-    update_values = user_in.dict(exclude_unset=True, exclude_none=True)
-    from src.utils import logger
-
-    logger.info(user_in.dict(exclude_unset=True, exclude_none=True))
-    # if not update_values:
-    #     return
-    if user_in.password:
-        update_values["password"] = hash_password(user_in.password)
-    update_query = (
-        user_tb.update().values(update_values).where(user_tb.c.email == email)
-    )
-    return await database.execute(update_query)
+    async def update_user(self, user: UserData, update_data: UserUpdate) -> UserData:
+        return await self.user_repo.update_user(id=user.id, update_data=update_data)

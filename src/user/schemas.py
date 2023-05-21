@@ -1,28 +1,31 @@
 from datetime import datetime
+from uuid import UUID
 
-from pydantic import EmailStr, validator
+from pydantic import EmailStr, Field, validator
 
 from src.auth.constants import AuthMethod
-from src.schemas import ORJSONModel
+from src.auth.schemas import AuthData
+from src.schemas import BaseModel
 from src.utils import validate_strong_password
 
 
-class User(ORJSONModel):
-    id: int
+class UserData(BaseModel):
+    id: UUID
     email: EmailStr
+    password: bytes
     first_name: str | None
     last_name: str | None
     full_name: str | None
     styles: list[str] | None
     gender: str | None
-    burst: int | None
+    bust: int | None
     waist: int | None
     hip: int | None
     weight: float | None
     height: float | None
-    is_admin: bool | None
-    is_active: bool | None
-    is_activated: bool | None
+    is_admin: bool
+    is_active: bool
+    is_activated: bool
     auth_method: AuthMethod
     created_at: datetime | None
     updated_at: datetime | None
@@ -36,22 +39,19 @@ class User(ORJSONModel):
         )
 
 
-class UserOut(User):
-    id: int
-    email: EmailStr
-    is_admin: bool
-    is_active: bool
-    is_activated: bool
-    styles: list[str] | None
+class UserCreate(AuthData):
+    auth_method: AuthMethod | None = Field(default=None, hidden=True)
+    first_name: str | None
+    last_name: str | None
 
 
-class UserIn(ORJSONModel):
+class UserUpdate(BaseModel):
     password: str | None
     first_name: str | None
     last_name: str | None
     gender: str | None
     styles: list[str] | None
-    burst: int | None
+    bust: int | None
     waist: int | None
     hip: int | None
     weight: float | None
@@ -59,4 +59,6 @@ class UserIn(ORJSONModel):
 
     @validator("password")
     def valid_password(cls, password: str) -> str:
-        return validate_strong_password(password)
+        if password is not None:
+            return validate_strong_password(password)
+        return None

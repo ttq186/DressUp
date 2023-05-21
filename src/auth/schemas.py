@@ -1,10 +1,13 @@
+from datetime import datetime
+from uuid import UUID
+
 from pydantic import EmailStr, Field, validator
 
-from src.schemas import ORJSONModel
+from src.schemas import BaseModel
 from src.utils import validate_strong_password
 
 
-class AuthUser(ORJSONModel):
+class AuthData(BaseModel):
     email: EmailStr
     password: str = Field(min_length=6, max_length=128)
 
@@ -13,28 +16,29 @@ class AuthUser(ORJSONModel):
         return validate_strong_password(password)
 
 
-class AuthUserViaGoogle(ORJSONModel):
-    id_token: str
-
-
-class JWTData(ORJSONModel):
-    user_id: int = Field(alias="sub")
-    email: str
+class JWTData(BaseModel):
+    id: UUID
+    email: str = Field(alias="sub")
     is_admin: bool = False
     is_activated: bool
     is_active: bool
 
 
-class AccessTokenResponse(ORJSONModel):
+class RefreshTokenData(BaseModel):
+    id: UUID
+    user_id: UUID
+    token: str
+    expires_at: datetime
+    created_at: datetime | None
+    updated_at: datetime | None
+
+
+class TokenData(BaseModel):
     access_token: str
     refresh_token: str
 
 
-class UserEmail(ORJSONModel):
-    email: EmailStr
-
-
-class UserResetPassword(ORJSONModel):
+class UserResetPassword(BaseModel):
     token: str
     new_password: str
 
@@ -43,5 +47,12 @@ class UserResetPassword(ORJSONModel):
         return validate_strong_password(new_password)
 
 
-class UserActivate(ORJSONModel):
+class RefreshTokenCreate(BaseModel):
+    user_id: UUID = Field(default=None, hidden=True)
     token: str
+    expires_at: datetime
+
+
+class RefreshTokenUpdate(BaseModel):
+    token: str | None
+    expires_at: datetime | None

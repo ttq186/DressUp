@@ -14,8 +14,3 @@ services:
     network_mode: host
     ports:
       - 2811:2811
-
-networks:
-  default:
-    external: true
-    name: dressup_app_main

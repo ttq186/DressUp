@@ -1,24 +1,21 @@
 from fastapi import APIRouter, Depends
 
-from src.auth.jwt import parse_jwt_user_data
-from src.auth.schemas import JWTData
-from src.user import service
-from src.user.schemas import UserIn, UserOut
+from src.user.dependencies import get_user_service, valid_user
+from src.user.schemas import UserData, UserUpdate
+from src.user.service import UserService
 
 router = APIRouter(prefix="/users", tags=["Users"])
 
 
-@router.get("/me", response_model=UserOut)
-async def get_my_profile(
-    jwt_data: JWTData = Depends(parse_jwt_user_data),
-):
-    return await service.get_user_by_id(jwt_data.user_id)
+@router.get("/me", response_model_exclude={"password"})
+async def get_my_profile(user: UserData = Depends(valid_user)) -> UserData:
+    return user
 
 
-@router.put("/me", response_model=UserOut)
+@router.put("/me", response_model_exclude={"password"})
 async def update_my_profile(
-    user_in: UserIn,
-    jwt_data: JWTData = Depends(parse_jwt_user_data),
-):
-    await service.update_user(email=jwt_data.email, user_in=user_in)
-    return await service.get_user_by_id(jwt_data.user_id)
+    user_update: UserUpdate,
+    user: UserData = Depends(valid_user),
+    service: UserService = Depends(get_user_service),
+) -> UserData:
+    return await service.update_user(user=user, update_data=user_update)

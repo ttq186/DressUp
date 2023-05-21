@@ -5,7 +5,8 @@ from typing import Any
 
 from jinja2 import Environment, FileSystemLoader
 
-from src.auth.config import auth_config
+from src.auth.config import settings
+from src.config import settings as global_settings
 
 
 def get_refresh_token_settings(
@@ -13,19 +14,21 @@ def get_refresh_token_settings(
     expired: bool = False,
 ) -> dict[str, Any]:
     base_cookie = {
-        "key": auth_config.REFRESH_TOKEN_KEY,
+        "key": "refreshToken",
         "httponly": True,
         "samesite": "none",
-        "secure": auth_config.SECURE_COOKIES,
-        "domain": auth_config.SITE_DOMAIN,
+        "secure": settings.SECURE_COOKIES,
     }
+    if global_settings.ENVIRONMENT.is_deployed:
+        base_cookie["domain"] = settings.SITE_DOMAIN
+
     if expired:
         return base_cookie
 
     return {
         **base_cookie,
         "value": refresh_token,
-        "max_age": auth_config.REFRESH_TOKEN_EXP,
+        "max_age": settings.REFRESH_TOKEN_EXPIRES_SECONDS,
     }
 
 
@@ -37,7 +40,7 @@ def send_email(
     html_content = template.render(render_data)
 
     msg = MIMEMultipart()
-    msg["From"] = auth_config.SENDER_EMAIL
+    msg["From"] = settings.SENDER_EMAIL
     msg["To"] = receiver_email
     msg["Subject"] = subject
     msg.attach(MIMEText(html_content, "html"))
@@ -45,10 +48,8 @@ def send_email(
     # Create SMTP session for sending the mail
     server = smtplib.SMTP("smtp.gmail.com", 587)
     server.starttls()
-    server.login(
-        user=auth_config.SENDER_EMAIL, password=auth_config.SENDER_EMAIL_PASSWORD
-    )
-    server.sendmail(auth_config.SENDER_EMAIL, receiver_email, msg.as_string())
+    server.login(user=settings.SENDER_EMAIL, password=settings.SENDER_EMAIL_PASSWORD)
+    server.sendmail(settings.SENDER_EMAIL, receiver_email, msg.as_string())
     server.quit()
 
 

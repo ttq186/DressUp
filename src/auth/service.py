@@ -1,187 +1,140 @@
-import uuid
-from datetime import datetime, timedelta
+from datetime import timedelta
+from uuid import UUID
 
-from databases.interfaces import Record
-from pydantic import UUID4
-from sqlalchemy import insert, select
+from google.auth.transport import requests
+from google.oauth2.id_token import verify_oauth2_token
 
 from src import utils
 from src.auth import jwt
-from src.auth.config import auth_config
+from src.auth.config import settings
 from src.auth.constants import AuthMethod
-from src.auth.database import refresh_token_tb
 from src.auth.exceptions import (
     AccountNotActivated,
     AccountSuspended,
     InvalidCredentials,
     InvalidToken,
 )
-from src.auth.schemas import AuthUser, UserActivate, UserResetPassword
-from src.auth.security import check_password, hash_password
+from src.auth.repository import AuthRepo
+from src.auth.schemas import (
+    AuthData,
+    RefreshTokenCreate,
+    RefreshTokenData,
+    RefreshTokenUpdate,
+    UserResetPassword,
+)
+from src.auth.security import check_password
 from src.auth.utils import send_activate_email, send_reset_password_email
-from src.database import database
-from src.user.database import user_tb
-from src.user.schemas import User
+from src.user.repository import UserRepo
+from src.user.schemas import UserCreate, UserData
+from src.utils import logger, utc_now
 
 
-async def create_user(user: AuthUser) -> Record:
-    insert_query = (
-        insert(user_tb)
-        .values(
-            {
-                "email": user.email,
-                "password": hash_password(user.password),
-                "auth_method": AuthMethod.NORMAL,
-            }
-        )
-        .returning(user_tb)
-    )
+class AuthService:
+    def __init__(self, auth_repo: AuthRepo, user_repo: UserRepo):
+        self.auth_repo = auth_repo
+        self.user_repo = user_repo
 
-    return await database.fetch_one(insert_query)  # type: ignore
+    async def authenticate_user(self, auth_data: AuthData) -> UserData:
+        user = await self.user_repo.get_by_email(auth_data.email)
+        if not user or not await check_password(auth_data.password, user.password):
+            raise InvalidCredentials()
 
-
-async def get_user_by_id(user_id: int) -> Record | None:
-    select_query = select(user_tb).where(user_tb.c.id == user_id)
-    return await database.fetch_one(select_query)
-
-
-async def get_user_by_email(email: str) -> Record | None:
-    select_query = select(user_tb).where(user_tb.c.email == email)
-    return await database.fetch_one(select_query)
-
-
-async def create_refresh_token(
-    *, user_id: int, refresh_token: str | None = None
-) -> str:
-    if not refresh_token:
-        refresh_token = utils.generate_random_alphanum(64)
-
-    insert_query = refresh_token_tb.insert().values(
-        uuid=uuid.uuid4(),
-        token=refresh_token,
-        expires_at=datetime.utcnow() + timedelta(seconds=auth_config.REFRESH_TOKEN_EXP),
-        user_id=user_id,
-    )
-    await database.execute(insert_query)
-
-    return refresh_token
-
-
-async def get_refresh_token(refresh_token: str) -> Record | None:
-    select_query = refresh_token_tb.select().where(
-        refresh_token_tb.c.token == refresh_token
-    )
-
-    return await database.fetch_one(select_query)
-
-
-async def expire_refresh_token(refresh_token_uuid: UUID4) -> None:
-    update_query = (
-        refresh_token_tb.update()
-        .values(expires_at=datetime.utcnow() - timedelta(days=1))
-        .where(refresh_token_tb.c.uuid == refresh_token_uuid)
-    )
-
-    await database.execute(update_query)
-
-
-async def authenticate_user(auth_data: AuthUser) -> Record:
-    user = await get_user_by_email(auth_data.email)
-    if not user or not check_password(auth_data.password, user["password"]):
-        raise InvalidCredentials()
-
-    if not user["is_active"]:
-        raise AccountSuspended()
-
-    if not user["is_activated"]:
-        raise AccountNotActivated()
-    return user
-
-
-async def authenticate_user_signed_in_via_google(id_token: str) -> Record:
-    from google.auth.transport import requests
-    from google.oauth2.id_token import verify_oauth2_token
-
-    from src.utils import logger
-
-    try:
-        request = requests.Request()
-        id_info = verify_oauth2_token(id_token=id_token, request=request)
-
-        user = await get_user_by_email(id_info["email"])
-        if not user:
-            insert_query = (
-                insert(user_tb)
-                .values(
-                    {
-                        "email": id_info["email"],
-                        "auth_method": AuthMethod.GOOGLE,
-                        "first_name": id_info["given_name"],
-                        "last_name": id_info["family_name"],
-                        "is_activated": True,
-                        "is_active": True,
-                    }
-                )
-                .returning(user_tb)
-            )
-            user = await database.fetch_one(insert_query)
-        if not user["is_active"]:  # type: ignore
+        if not user.is_active:
             raise AccountSuspended()
-        return user  # type: ignore
-    except Exception as e:
-        logger.warning(f"Decode oauth2: {e}")
-        raise InvalidToken()
 
+        if not user.is_activated:
+            raise AccountNotActivated()
+        return user
 
-def create_and_send_activate_email(user: User) -> None:
-    username = user.full_name or user.email.split("@")[0]
-    token = jwt.create_access_token(
-        user=user.dict(),
-        expires_delta=timedelta(minutes=15),
-        secret_key=auth_config.JWT_EXTRA_SECRET,
-    )
-    activate_url = f"https://dress-up-stag.vercel.app/users/activate?token={token}"
-    send_activate_email(
-        receiver_email=user.email,
-        username=username,
-        activate_url=activate_url,
-    )
+    async def authenticate_user_signed_in_via_google(self, id_token: str) -> UserData:
+        try:
+            id_info = verify_oauth2_token(id_token=id_token, request=requests.Request())
 
+            user = await self.user_repo.get_by_email(id_info["email"])
+            if not user:
+                create_data = UserCreate(
+                    email=id_info["email"],
+                    auth_method=AuthMethod.GOOGLE,
+                    first_name=id_info["given_name"],
+                    last_name=id_info["family_name"],
+                    is_activated=True,
+                    is_active=True,
+                )
+                user = await self.user_repo.create(create_data)
 
-def create_and_send_reset_password_email(user: User) -> None:
-    username = user.full_name or user.email.split("@")[0]
-    token = jwt.create_access_token(
-        user=user.dict(),
-        expires_delta=timedelta(minutes=10),
-        secret_key=auth_config.JWT_EXTRA_SECRET,
-    )
-    reset_url = f"https://dress-up-stag.vercel.app/users/reset-password?token={token}"
-    send_reset_password_email(
-        receiver_email=user.email,
-        username=username,
-        reset_url=reset_url,
-    )
+            if not user.is_active:
+                raise AccountSuspended()
+            return user
+        except Exception as e:
+            logger.warning(f"Decode oauth2: {e}")
+            raise InvalidToken()
 
+    async def create_refresh_token(self, user_id: UUID) -> RefreshTokenData:
+        create_data = RefreshTokenCreate(
+            user_id=user_id,
+            token=utils.generate_random_alphanum(64),
+            expires_at=utc_now()
+            + timedelta(seconds=settings.REFRESH_TOKEN_EXPIRES_SECONDS),
+        )
+        return await self.auth_repo.create_refresh_token(create_data=create_data)
 
-async def reset_password(user_reset_payload: UserResetPassword) -> None:
-    user_payload = jwt.decode_token(
-        token=user_reset_payload.token, secret_key=auth_config.JWT_EXTRA_SECRET
-    )
-    update_query = (
-        user_tb.update()
-        .values(password=hash_password(user_reset_payload.new_password))
-        .where(user_tb.c.email == user_payload["email"])
-    )
-    await database.fetch_one(update_query)
+    async def issue_new_refresh_token(self, user_id: UUID) -> RefreshTokenData:
+        update_data = RefreshTokenUpdate(
+            token=utils.generate_random_alphanum(64),
+            expires_at=utc_now()
+            + timedelta(seconds=settings.REFRESH_TOKEN_EXPIRES_SECONDS),
+        )
+        return await self.auth_repo.update_refresh_token(
+            user_id=user_id, update_data=update_data
+        )
 
+    async def expire_refresh_token(self, user_id: UUID):
+        update_data = RefreshTokenUpdate(
+            user_id=user_id, expires_at=utc_now() - timedelta(days=1)
+        )
+        return await self.auth_repo.update_refresh_token(
+            user_id=user_id, update_data=update_data
+        )
 
-async def activate_account(user_activate_payload: UserActivate) -> None:
-    user_payload = jwt.decode_token(
-        token=user_activate_payload.token, secret_key=auth_config.JWT_EXTRA_SECRET
-    )
-    update_query = (
-        user_tb.update()
-        .values(is_activated=True)
-        .where(user_tb.c.email == user_payload["email"])
-    )
-    await database.fetch_one(update_query)
+    def create_and_send_activate_email(self, user: UserData) -> None:
+        username = user.full_name or user.email.split("@")[0]
+        token = jwt.create_access_token(
+            user=user,
+            expires_delta=timedelta(minutes=15),
+            secret_key=settings.JWT_EXTRA_SECRET,
+        )
+        activate_url = f"{settings.SITE_DOMAIN}/users/activate?token={token}"
+        send_activate_email(
+            receiver_email=user.email,
+            username=username,
+            activate_url=activate_url,
+        )
+
+    def create_and_send_reset_password_email(self, user: UserData) -> None:
+        username = user.full_name or user.email.split("@")[0]
+        token = jwt.create_access_token(
+            user=user,
+            expires_delta=timedelta(minutes=10),
+            secret_key=settings.JWT_EXTRA_SECRET,
+        )
+        reset_url = f"{settings.SITE_DOMAIN}/users/reset-password?token={token}"
+        send_reset_password_email(
+            receiver_email=user.email,
+            username=username,
+            reset_url=reset_url,
+        )
+
+    async def reset_password(self, user_reset_password_data: UserResetPassword) -> None:
+        token_data = jwt.decode_token(
+            token=user_reset_password_data.token, secret_key=settings.JWT_EXTRA_SECRET
+        )
+        await self.user_repo.update_user(
+            id=token_data["id"],
+            update_data={"password": user_reset_password_data.new_password},
+        )
+
+    async def activate_account(self, token: str) -> None:
+        token_data = jwt.decode_token(token=token, secret_key=settings.JWT_EXTRA_SECRET)
+        await self.user_repo.update_user(
+            id=token_data["id"], update_data={"is_activated": True}
+        )

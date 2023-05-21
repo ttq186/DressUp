@@ -2,6 +2,7 @@ import logging
 import random
 import re
 import string
+from datetime import datetime, timezone
 
 logger = logging.getLogger(__name__)
 ALPHA_NUM = string.ascii_letters + string.digits
@@ -25,3 +26,7 @@ def validate_strong_password(password: str) -> str:
         )
 
     return password
+
+
+def utc_now() -> datetime:
+    return datetime.now(tz=timezone.utc)
