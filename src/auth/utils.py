@@ -16,7 +16,7 @@ def get_refresh_token_settings(
     base_cookie = {
         "key": "refreshToken",
         "httponly": True,
-        "samesite": "none",
+        # "samesite": "none",
         "secure": settings.SECURE_COOKIES,
     }
     if global_settings.ENVIRONMENT.is_deployed:
