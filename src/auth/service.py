@@ -1,6 +1,7 @@
 from datetime import timedelta
 from uuid import UUID
 
+from fastapi.concurrency import run_in_threadpool
 from google.auth.transport import requests
 from google.oauth2.id_token import verify_oauth2_token
 
@@ -9,12 +10,12 @@ from src.auth import jwt
 from src.auth.config import settings
 from src.auth.constants import AuthMethod
 from src.auth.exceptions import (
+    AccountCreatedByNormalMethod,
+    AccountCreatedViaThirdParty,
     AccountNotActivated,
     AccountSuspended,
     InvalidCredentials,
     InvalidToken,
-    AccountCreatedViaThirdParty,
-    AccountCreatedByNormalMethod,
 )
 from src.auth.repository import AuthRepo
 from src.auth.schemas import (
@@ -54,29 +55,31 @@ class AuthService:
 
     async def authenticate_user_signed_in_via_google(self, id_token: str) -> UserData:
         try:
-            id_info = verify_oauth2_token(id_token=id_token, request=requests.Request())
-
-            user = await self.user_repo.get_by_email(id_info["email"])
-            if not user:
-                create_data = UserCreate(
-                    email=id_info["email"],
-                    auth_method=AuthMethod.GOOGLE,
-                    first_name=id_info["given_name"],
-                    last_name=id_info["family_name"],
-                    is_activated=True,
-                    is_active=True,
-                )
-                user = await self.user_repo.create(create_data)
-
-            if user.auth_method != AuthMethod.GOOGLE:
-                raise AccountCreatedByNormalMethod()
-
-            if not user.is_active:
-                raise AccountSuspended()
-            return user
+            id_info = await run_in_threadpool(
+                verify_oauth2_token, id_token=id_token, request=requests.Request()
+            )
         except Exception as e:
             logger.warning(f"Decode oauth2: {e}")
             raise InvalidToken()
+
+        user = await self.user_repo.get_by_email(id_info["email"])
+        if not user:
+            create_data = UserCreate(
+                email=id_info["email"],
+                auth_method=AuthMethod.GOOGLE,
+                first_name=id_info["given_name"],
+                last_name=id_info["family_name"],
+                is_activated=True,
+                is_active=True,
+            )
+            user = await self.user_repo.create(create_data)
+
+        if user.auth_method != AuthMethod.GOOGLE:
+            raise AccountCreatedByNormalMethod()
+
+        if not user.is_active:
+            raise AccountSuspended()
+        return user
 
     async def create_refresh_token(self, user_id: UUID) -> RefreshTokenData:
         create_data = RefreshTokenCreate(
