@@ -43,7 +43,7 @@ async def request_activate_account(
         raise AccountAlreadyActivated()
 
     background_tasks.add_task(service.create_and_send_activate_email, user=user)
-    return Message(detail=SuccessMessage.SUCCESS_ACTIVATE_ACCOUNT)
+    return Message(detail=SuccessMessage.SUCCESS_REQUEST_ACTIVATE_ACCOUNT)
 
 
 @router.post("/users/activate")
