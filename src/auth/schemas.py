@@ -17,7 +17,7 @@ class AuthData(BaseModel):
 
 
 class JWTData(BaseModel):
-    id: UUID
+    user_id: UUID
     email: str = Field(alias="sub")
     is_admin: bool = False
     is_activated: bool

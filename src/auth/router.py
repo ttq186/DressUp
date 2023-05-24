@@ -4,14 +4,22 @@ from src.auth import jwt, utils
 from src.auth.constants import SuccessMessage
 from src.auth.dependencies import (
     get_auth_service,
+    valid_jwt_token,
     valid_refresh_token,
     valid_refresh_token_user,
     valid_user_create,
     valid_user_email,
 )
 from src.auth.exceptions import AccountAlreadyActivated
-from src.auth.schemas import AuthData, RefreshTokenData, TokenData, UserResetPassword
+from src.auth.schemas import (
+    AuthData,
+    JWTData,
+    RefreshTokenData,
+    TokenData,
+    UserResetPassword,
+)
 from src.auth.service import AuthService
+from src.aws.schemas import PresignedUrlData
 from src.schemas import Message
 from src.user.dependencies import get_user_service
 from src.user.schemas import UserCreate, UserData
@@ -136,3 +144,12 @@ async def logout_user(
     response.delete_cookie(
         **utils.get_refresh_token_settings(refresh_token.token, expired=True)
     )
+
+
+@router.post("/presigned-urls/post")
+async def get_presigned_url_for_uploading(
+    object_name: str = Body(..., embed=True),
+    jwt_data: JWTData = Depends(valid_jwt_token),
+    service: AuthService = Depends(get_auth_service),
+) -> PresignedUrlData:
+    return await service.generate_presigned_url_post(object_name=object_name)

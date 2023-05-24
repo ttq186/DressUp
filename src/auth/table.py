@@ -13,7 +13,11 @@ refresh_token_tb = Table(
         server_default=text("uuid_generate_v4()"),
     ),
     Column(
-        "user_id", ForeignKey("user.id", ondelete="CASCADE"), index=True, nullable=False
+        "user_id",
+        ForeignKey("user.id", ondelete="CASCADE"),
+        index=True,
+        nullable=False,
+        unique=True,
     ),
     Column("token", String, nullable=False),
     Column("expires_at", DateTime(timezone=True), nullable=False),

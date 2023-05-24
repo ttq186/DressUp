@@ -27,6 +27,8 @@ from src.auth.schemas import (
 )
 from src.auth.security import check_password
 from src.auth.utils import send_activate_email, send_reset_password_email
+from src.aws.client import S3
+from src.aws.schemas import PresignedUrlData
 from src.user.repository import UserRepo
 from src.user.schemas import UserCreate, UserData
 from src.utils import logger, utc_now
@@ -150,3 +152,9 @@ class AuthService:
         await self.user_repo.update_user(
             id=token_data["id"], update_data={"is_activated": True}
         )
+
+    async def generate_presigned_url_post(self, object_name: str) -> PresignedUrlData:
+        result = await run_in_threadpool(
+            S3().generate_presigned_url_post, object_name=object_name
+        )
+        return PresignedUrlData(**result)
