@@ -12,6 +12,7 @@ from sqlalchemy import (
 )
 from sqlalchemy.dialects.postgresql import UUID
 
+from src.auth.constants import UserRole
 from src.database import metadata
 
 user_tb = Table(
@@ -34,7 +35,7 @@ user_tb = Table(
     Column("hip", Integer),
     Column("weight", Integer),
     Column("height", Integer),
-    Column("is_admin", Boolean, server_default="false", nullable=False),
+    Column("role", String, server_default=UserRole.USER, nullable=False),
     Column("is_active", Boolean, server_default="true", nullable=False),
     Column("is_activated", Boolean, server_default="false", nullable=False),
     Column("auth_method", String, server_default="NORMAL", nullable=False),

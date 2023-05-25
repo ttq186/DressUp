@@ -3,6 +3,7 @@ from uuid import UUID
 
 from pydantic import EmailStr, Field, validator
 
+from src.auth.constants import UserRole
 from src.schemas import BaseModel
 from src.utils import validate_strong_password
 
@@ -19,7 +20,7 @@ class AuthData(BaseModel):
 class JWTData(BaseModel):
     user_id: UUID
     email: str = Field(alias="sub")
-    is_admin: bool = False
+    role: UserRole
     is_activated: bool
     is_active: bool
 

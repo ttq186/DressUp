@@ -43,3 +43,9 @@ class SuccessMessage:
 class AuthMethod(str, Enum):
     NORMAL = "NORMAL"
     GOOGLE = "GOOGLE"
+
+
+class UserRole(str, Enum):
+    ADMIN = "ADMIN"
+    SUBSCRIBER = "SUBSCRIBER"
+    USER = "USER"

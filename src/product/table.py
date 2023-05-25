@@ -1,5 +1,6 @@
 from sqlalchemy import (
     ARRAY,
+    BigInteger,
     Boolean,
     Column,
     DateTime,
@@ -9,21 +10,14 @@ from sqlalchemy import (
     String,
     Table,
     func,
-    text,
 )
-from sqlalchemy.dialects.postgresql import UUID
 
 from src.database import metadata
 
 product_tb = Table(
     "product",
     metadata,
-    Column(
-        "id",
-        UUID(as_uuid=True),
-        primary_key=True,
-        server_default=text("uuid_generate_v4()"),
-    ),
+    Column("id", BigInteger, primary_key=True),
     Column(
         "owner_id",
         ForeignKey("user.id", ondelete="CASCADE"),
@@ -34,9 +28,15 @@ product_tb = Table(
     Column("description", String),
     Column("brand", String),
     Column("is_public", Boolean),
+    Column("material", String),
+    Column("style", String),
+    Column("pattern", String),
+    Column("shop_id", BigInteger),
+    Column("original_url", String),
     Column("shopee_affiliate_url", String),
     Column("lazada_affiliate_url", String),
     Column("tiktok_affiliate_url", String),
+    Column("transparent_background_image", String),
     Column("image_urls", ARRAY(String)),
     Column("created_at", DateTime(timezone=True), server_default=func.now()),
     Column(
@@ -52,6 +52,7 @@ category_tb = Table(
     metadata,
     Column("id", Integer, Identity(), primary_key=True),
     Column("name", String, nullable=False),
+    Column("display_name", String, nullable=False),
     Column("created_at", DateTime(timezone=True), server_default=func.now()),
     Column(
         "updated_at",

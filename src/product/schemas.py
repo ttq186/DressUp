@@ -5,14 +5,22 @@ from src.schemas import BaseModel
 
 
 class ProductData(BaseModel):
-    id: UUID
+    id: int
+    owner_id: UUID
     name: str
     description: str
+    categories: list[str]
     brand: str | None
+    material: str | None
+    style: str | None
+    pattern: str | None
+    my_rating_score: int | None
+    original_url: str
+    transparent_background_image: str | None
     is_public: bool
-    shopee_affiliate_url: str
-    lazada_affiliate_url: str
-    tiktok_affiliate_url: str
+    shopee_affiliate_url: str | None
+    lazada_affiliate_url: str | None
+    tiktok_affiliate_url: str | None
     image_urls: list[str]
     created_at: datetime | None
     updated_at: datetime | None
@@ -24,3 +32,9 @@ class ProductCreate(BaseModel):
 
 class ProductUpdate(BaseModel):
     pass
+
+
+class ProductRatingData(BaseModel):
+    user_id: UUID
+    product_id: int
+    score: int

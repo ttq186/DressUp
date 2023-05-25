@@ -75,6 +75,7 @@ class AuthService:
                 is_active=True,
             )
             user = await self.user_repo.create(create_data)
+            await self.create_refresh_token(user.id)
 
         if user.auth_method != AuthMethod.GOOGLE:
             raise AccountCreatedByNormalMethod()
@@ -143,14 +144,14 @@ class AuthService:
             token=user_reset_password_data.token, secret_key=settings.JWT_EXTRA_SECRET
         )
         await self.user_repo.update_user(
-            id=token_data["id"],
+            id=token_data["user_id"],
             update_data={"password": user_reset_password_data.new_password},
         )
 
     async def activate_account(self, token: str) -> None:
         token_data = jwt.decode_token(token=token, secret_key=settings.JWT_EXTRA_SECRET)
         await self.user_repo.update_user(
-            id=token_data["id"], update_data={"is_activated": True}
+            id=token_data["user_id"], update_data={"is_activated": True}
         )
 
     async def generate_presigned_url_post(self, object_name: str) -> PresignedUrlData:

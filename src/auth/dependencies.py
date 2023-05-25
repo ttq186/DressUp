@@ -5,7 +5,6 @@ from jose import JWTError, jwt
 from src.auth.config import settings
 from src.auth.constants import AuthMethod
 from src.auth.exceptions import (
-    AuthorizationFailed,
     AuthRequired,
     EmailNotRegistered,
     EmailTaken,
@@ -13,7 +12,7 @@ from src.auth.exceptions import (
     RefreshTokenNotValid,
 )
 from src.auth.repository import AuthRepo
-from src.auth.schemas import JWTData, RefreshTokenData
+from src.auth.schemas import AuthData, JWTData, RefreshTokenData
 from src.auth.service import AuthService
 from src.user.repository import UserRepo
 from src.user.schemas import UserCreate, UserData
@@ -60,31 +59,12 @@ async def valid_jwt_token(
     return token
 
 
-async def parse_jwt_admin_data(
-    token: JWTData = Depends(valid_jwt_token),
-) -> JWTData:
-    if not token.is_admin:
-        raise AuthorizationFailed()
-
-    return token
-
-
-async def validate_admin_access(
-    token: JWTData | None = Depends(valid_jwt_token_optional),
-) -> None:
-    if token and token.is_admin:
-        return
-
-    raise AuthorizationFailed()
-
-
 async def valid_user_create(
-    user_create: UserCreate, user_repo: UserRepo = Depends()
+    auth_data: AuthData, user_repo: UserRepo = Depends()
 ) -> UserCreate:
-    if await user_repo.get_by_email(user_create.email):
+    if await user_repo.get_by_email(auth_data.email):
         raise EmailTaken()
-    user_create.auth_method = AuthMethod.NORMAL
-    return user_create
+    return UserCreate(**auth_data.dict(), auth_method=AuthMethod.NORMAL)  # type: ignore
 
 
 async def valid_refresh_token(

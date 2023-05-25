@@ -16,7 +16,7 @@ def create_access_token(
         "sub": user.email,
         "user_id": str(user.id),
         "exp": datetime.utcnow() + expires_delta,
-        "is_admin": user.is_admin,
+        "role": user.role,
         "is_active": user.is_active,
         "is_activated": user.is_activated,
     }

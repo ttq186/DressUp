@@ -3,8 +3,7 @@ from uuid import UUID
 
 from pydantic import EmailStr, Field, validator
 
-from src.auth.constants import AuthMethod
-from src.auth.schemas import AuthData
+from src.auth.constants import AuthMethod, UserRole
 from src.schemas import BaseModel
 from src.utils import validate_strong_password
 
@@ -12,7 +11,7 @@ from src.utils import validate_strong_password
 class UserData(BaseModel):
     id: UUID
     email: EmailStr
-    password: bytes
+    password: bytes | None
     first_name: str | None
     last_name: str | None
     full_name: str | None
@@ -23,7 +22,7 @@ class UserData(BaseModel):
     hip: int | None
     weight: float | None
     height: float | None
-    is_admin: bool
+    role: UserRole
     is_active: bool
     is_activated: bool
     auth_method: AuthMethod
@@ -39,10 +38,18 @@ class UserData(BaseModel):
         )
 
 
-class UserCreate(AuthData):
+class UserCreate(BaseModel):
+    email: EmailStr
+    password: str | None = Field(min_length=6, max_length=128)
     auth_method: AuthMethod | None = Field(default=None, hidden=True)
     first_name: str | None
     last_name: str | None
+
+    @validator("password")
+    def valid_password(cls, password: str) -> str:
+        if not password:
+            return password
+        return validate_strong_password(password)
 
 
 class UserUpdate(BaseModel):
