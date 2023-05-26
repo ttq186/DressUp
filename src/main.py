@@ -2,6 +2,7 @@ from contextlib import asynccontextmanager
 
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.middleware.gzip import GZipMiddleware
 
 from src.auth.router import router as auth_router
 from src.closet.router import router as closet_router
@@ -31,6 +32,9 @@ app.add_middleware(
     allow_credentials=True,
     allow_methods=("GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"),
     allow_headers=settings.CORS_HEADERS,
+)
+app.add_middleware(
+    GZipMiddleware, minimum_size=1000 
 )
 
 
