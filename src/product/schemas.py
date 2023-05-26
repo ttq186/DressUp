@@ -26,6 +26,11 @@ class ProductData(BaseModel):
     updated_at: datetime | None
 
 
+class ProductDatas(BaseModel):
+    products: list[ProductData]
+    total_rows: int
+
+
 class ProductCreate(BaseModel):
     pass
 

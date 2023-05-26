@@ -1,7 +1,7 @@
 from uuid import UUID
 
 from src.product.repository import ProductRepo
-from src.product.schemas import CategoryData, ProductData
+from src.product.schemas import CategoryData, ProductData, ProductDatas
 
 
 class ProductService:
@@ -14,7 +14,7 @@ class ProductService:
         search_keyword: str | None = None,
         size: int = 20,
         offset: int = 0,
-    ) -> list[ProductData]:
+    ) -> ProductDatas:
         return await self.product_repo.get_multi(
             owner_id=owner_id, search_keyword=search_keyword, size=size, offset=offset
         )
@@ -25,7 +25,7 @@ class ProductService:
         search_keyword: str | None = None,
         size: int = 20,
         offset: int = 0,
-    ) -> list[ProductData]:
+    ) -> ProductDatas:
         return await self.product_repo.get_multi(
             owner_id=owner_id, search_keyword=search_keyword, size=size, offset=offset
         )

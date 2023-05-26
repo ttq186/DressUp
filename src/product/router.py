@@ -4,7 +4,7 @@ from src.auth.dependencies import valid_jwt_token
 from src.auth.schemas import JWTData
 from src.product.dependencies import get_product_service, valid_product_id
 from src.product.exceptions import ProductNotRatedYet
-from src.product.schemas import CategoryData, ProductData
+from src.product.schemas import CategoryData, ProductData, ProductDatas
 from src.product.service import ProductService
 
 router = APIRouter(prefix="/products", tags=["Products"])
@@ -16,7 +16,7 @@ async def get_products(
     size: int = Query(default=20, ge=1),
     offset: int = Query(default=0, ge=0),
     service: ProductService = Depends(get_product_service),
-) -> list[ProductData]:
+) -> ProductDatas:
     return await service.get_products(
         search_keyword=search_keyword, size=size, offset=offset
     )
@@ -29,7 +29,7 @@ async def get_my_products(
     offset: int = Query(default=0, ge=0),
     jwt_data: JWTData = Depends(valid_jwt_token),
     service: ProductService = Depends(get_product_service),
-) -> list[ProductData]:
+) -> ProductDatas:
     return await service.get_products(
         owner_id=jwt_data.user_id,
         search_keyword=search_keyword,
