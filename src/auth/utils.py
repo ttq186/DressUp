@@ -6,30 +6,20 @@ from typing import Any
 from jinja2 import Environment, FileSystemLoader
 
 from src.auth.config import settings
-from src.config import settings as global_settings
 
 
-def get_refresh_token_settings(
-    refresh_token: str,
-    expired: bool = False,
-) -> dict[str, Any]:
-    base_cookie = {
+def get_refresh_token_settings(refresh_token: str) -> dict[str, Any]:
+    base_cookies = {
         "key": "refreshToken",
         "httponly": True,
-        "samesite": "none",
         "secure": settings.SECURE_COOKIES,
-    }
-    if global_settings.ENVIRONMENT.is_deployed:
-        base_cookie["domain"] = settings.SITE_DOMAIN
-
-    if expired:
-        return base_cookie
-
-    return {
-        **base_cookie,
         "value": refresh_token,
+        "samesite": "none",
         "max_age": settings.REFRESH_TOKEN_EXPIRES_SECONDS,
     }
+    # if settings.SITE_DOMAIN != "localhost":
+    #     base_cookies["domain"] = settings.SITE_DOMAIN
+    return base_cookies
 
 
 def send_email(
