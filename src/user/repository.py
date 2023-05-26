@@ -33,7 +33,6 @@ class UserRepo:
             update_data["password"] = await security.hash_password(
                 update_data["password"]
             )
-        print(update_data)
         update_query = (
             user_tb.update()
             .values(update_data)

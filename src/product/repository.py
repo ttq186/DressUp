@@ -4,7 +4,7 @@ from sqlalchemy import and_, func, or_, select
 from sqlalchemy.sql import Select
 
 from src.database import database
-from src.product.schemas import ProductData, ProductRatingData
+from src.product.schemas import ProductData, ProductRatingData, CategoryData
 from src.product.table import (
     category_tb,
     product_category_tb,
@@ -71,6 +71,11 @@ class ProductRepo:
         )
         results = await database.fetch_all(select_query)
         return [ProductData(**result._mapping) for result in results]
+
+    async def get_categories(self) -> list[CategoryData]:
+        select_query = category_tb.select()
+        results = await database.fetch_all(select_query)
+        return [CategoryData(**result._mapping) for result in results]
 
     async def get_by_id_and_user_id(
         self, product_id: int, user_id: UUID

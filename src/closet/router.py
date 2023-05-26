@@ -14,7 +14,7 @@ router = APIRouter(prefix="/closets", tags=["Closets"])
 
 
 @router.get("/me")
-async def get_my_closet(
+async def get_or_create_if_not_exist_my_closet(
     jwt_data: JWTData = Depends(valid_jwt_token),
     service: ClosetService = Depends(get_closet_service),
 ) -> ClosetData:

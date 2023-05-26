@@ -1,7 +1,7 @@
 from uuid import UUID
 
 from src.product.repository import ProductRepo
-from src.product.schemas import ProductData
+from src.product.schemas import ProductData, CategoryData
 
 
 class ProductService:
@@ -29,6 +29,9 @@ class ProductService:
         return await self.product_repo.get_multi(
             owner_id=owner_id, search_keyword=search_keyword, size=size, offset=offset
         )
+
+    async def get_categories(self) -> list[CategoryData]:
+        return await self.product_repo.get_categories()
 
     async def rate_product(
         self, user_id: UUID, product: ProductData, score: int

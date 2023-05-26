@@ -1,7 +1,7 @@
 from datetime import datetime
 from uuid import UUID
 
-from pydantic import EmailStr, Field, validator
+from pydantic import EmailStr, Field, validator, root_validator
 
 from src.auth.constants import AuthMethod, UserRole
 from src.schemas import BaseModel
@@ -63,6 +63,12 @@ class UserUpdate(BaseModel):
     hip: int | None
     weight: float | None
     height: float | None
+
+    @root_validator
+    def validate_at_least_one_field_specified(cls, values):
+        if all(v is None for v in values.values()):
+            raise ValueError("At least one field must be provided!")
+        return values
 
     @validator("password")
     def valid_password(cls, password: str) -> str:

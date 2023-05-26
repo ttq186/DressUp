@@ -38,3 +38,11 @@ class ProductRatingData(BaseModel):
     user_id: UUID
     product_id: int
     score: int
+
+
+class CategoryData(BaseModel):
+    id: int
+    name: str
+    display_name: str | None
+    created_at: datetime | None
+    updated_at: datetime | None

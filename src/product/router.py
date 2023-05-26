@@ -4,7 +4,7 @@ from src.auth.dependencies import valid_jwt_token
 from src.auth.schemas import JWTData
 from src.product.dependencies import get_product_service, valid_product_id
 from src.product.exceptions import ProductAlreadyRated, ProductNotRatedYet
-from src.product.schemas import ProductData
+from src.product.schemas import ProductData, CategoryData
 from src.product.service import ProductService
 
 router = APIRouter(prefix="/products", tags=["Products"])
@@ -36,6 +36,14 @@ async def get_my_products(
         size=size,
         offset=offset,
     )
+
+
+@router.get("/categories")
+async def get_categories(
+    jwt_data: JWTData = Depends(valid_jwt_token),
+    service: ProductService = Depends(get_product_service),
+) -> list[CategoryData]:
+    return await service.get_categories()
 
 
 @router.get("/{product_id}")
