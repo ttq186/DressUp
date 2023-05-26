@@ -45,7 +45,7 @@ user_tb = Table(
     Column(
         "updated_at",
         DateTime(timezone=True),
-        server_onupdate=func.now(),
+        onupdate=func.now(),
         server_default=func.now(),
     ),
 )

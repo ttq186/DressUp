@@ -1,7 +1,7 @@
 from datetime import datetime
 from uuid import UUID
 
-from pydantic import EmailStr, Field, validator, root_validator
+from pydantic import EmailStr, Field, root_validator, validator
 
 from src.auth.constants import AuthMethod, UserRole
 from src.schemas import BaseModel

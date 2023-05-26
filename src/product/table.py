@@ -4,6 +4,7 @@ from sqlalchemy import (
     Boolean,
     Column,
     DateTime,
+    Float,
     ForeignKey,
     Identity,
     Integer,
@@ -98,7 +99,7 @@ product_rating_tb = Table(
         nullable=False,
         index=True,
     ),
-    Column("score", Integer, nullable=False),
+    Column("score", Float, nullable=False),
     UniqueConstraint("product_id", "user_id"),
 )
 

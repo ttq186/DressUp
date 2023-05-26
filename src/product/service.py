@@ -1,7 +1,7 @@
 from uuid import UUID
 
 from src.product.repository import ProductRepo
-from src.product.schemas import ProductData, CategoryData
+from src.product.schemas import CategoryData, ProductData
 
 
 class ProductService:
@@ -34,11 +34,19 @@ class ProductService:
         return await self.product_repo.get_categories()
 
     async def rate_product(
-        self, user_id: UUID, product: ProductData, score: int
+        self, user_id: UUID, product: ProductData, score: float
     ) -> ProductData:
-        product_rating = await self.product_repo.create_product_rating(
-            user_id=user_id, product_id=product.id, score=score
+        product_rating = await self.product_repo.get_product_rating(
+            user_id=user_id, product_id=product.id
         )
+        if not product_rating:
+            product_rating = await self.product_repo.create_product_rating(
+                user_id=user_id, product_id=product.id, score=score
+            )
+        else:
+            product_rating = await self.product_repo.update_product_rating(
+                user_id=user_id, product_id=product.id, score=score
+            )
         return ProductData(
             **product.dict(exclude={"my_rating_score"}),
             my_rating_score=product_rating.score

@@ -3,8 +3,8 @@ from fastapi import APIRouter, Body, Depends, Query, status
 from src.auth.dependencies import valid_jwt_token
 from src.auth.schemas import JWTData
 from src.product.dependencies import get_product_service, valid_product_id
-from src.product.exceptions import ProductAlreadyRated, ProductNotRatedYet
-from src.product.schemas import ProductData, CategoryData
+from src.product.exceptions import ProductNotRatedYet
+from src.product.schemas import CategoryData, ProductData
 from src.product.service import ProductService
 
 router = APIRouter(prefix="/products", tags=["Products"])
@@ -51,15 +51,13 @@ async def get_product(product: ProductData = Depends(valid_product_id)) -> Produ
     return product
 
 
-@router.post("/{product_id}/rating")
+@router.put("/{product_id}/rating")
 async def rate_product(
-    score: int = Body(embed=True, ge=1, lt=5),
+    score: float = Body(embed=True, ge=0.5, lt=5),
     product: ProductData = Depends(valid_product_id),
     jwt_data: JWTData = Depends(valid_jwt_token),
     service: ProductService = Depends(get_product_service),
 ) -> ProductData:
-    if product.my_rating_score:
-        raise ProductAlreadyRated()
     return await service.rate_product(
         product=product, user_id=jwt_data.user_id, score=score
     )

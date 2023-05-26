@@ -27,7 +27,7 @@ refresh_token_tb = Table(
     Column(
         "updated_at",
         DateTime(timezone=True),
+        onupdate=func.now(),
         server_default=func.now(),
-        server_onupdate=func.now(),
     ),
 )

@@ -4,7 +4,7 @@ from sqlalchemy import and_, func, or_, select
 from sqlalchemy.sql import Select
 
 from src.database import database
-from src.product.schemas import ProductData, ProductRatingData, CategoryData
+from src.product.schemas import CategoryData, ProductData, ProductRatingData
 from src.product.table import (
     category_tb,
     product_category_tb,
@@ -87,8 +87,20 @@ class ProductRepo:
         result = await database.fetch_one(select_query)
         return ProductData(**result._mapping) if result else None
 
+    async def get_product_rating(
+        self, user_id: UUID, product_id: int
+    ) -> ProductRatingData | None:
+        select_query = product_rating_tb.select().where(
+            and_(
+                product_rating_tb.c.user_id == user_id,
+                product_rating_tb.c.product_id == product_id,
+            )
+        )
+        result = await database.fetch_one(select_query)
+        return ProductRatingData(**result._mapping) if result else None
+
     async def create_product_rating(
-        self, user_id: UUID, product_id: int, score: int
+        self, user_id: UUID, product_id: int, score: float
     ) -> ProductRatingData:
         insert_query = (
             product_rating_tb.insert()
@@ -96,6 +108,23 @@ class ProductRepo:
             .returning(product_rating_tb)
         )
         result = await database.fetch_one(insert_query)
+        return ProductRatingData(**result._mapping)  # type: ignore
+
+    async def update_product_rating(
+        self, user_id: UUID, product_id: int, score: float
+    ) -> ProductRatingData:
+        update_query = (
+            product_rating_tb.update()
+            .where(
+                and_(
+                    product_rating_tb.c.user_id == user_id,
+                    product_rating_tb.c.product_id == product_id,
+                )
+            )
+            .values(score=score)
+            .returning(product_rating_tb)
+        )
+        result = await database.fetch_one(update_query)
         return ProductRatingData(**result._mapping)  # type: ignore
 
     async def delete_product_rating(self, user_id: UUID, product_id: int) -> None:

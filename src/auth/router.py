@@ -118,7 +118,6 @@ async def login_via_google(
 
 @router.put("/users/tokens", response_model=TokenData)
 async def refresh_tokens(
-    background_tasks: BackgroundTasks,
     response: Response,
     refresh_token: RefreshTokenData = Depends(valid_refresh_token),
     user: UserData = Depends(valid_refresh_token_user),

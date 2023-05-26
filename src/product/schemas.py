@@ -14,7 +14,7 @@ class ProductData(BaseModel):
     material: str | None
     style: str | None
     pattern: str | None
-    my_rating_score: int | None
+    my_rating_score: float | None
     original_url: str
     transparent_background_image: str | None
     is_public: bool
@@ -37,7 +37,7 @@ class ProductUpdate(BaseModel):
 class ProductRatingData(BaseModel):
     user_id: UUID
     product_id: int
-    score: int
+    score: float
 
 
 class CategoryData(BaseModel):
