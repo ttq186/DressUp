@@ -1,11 +1,11 @@
 from fastapi import Depends
 
-from src.product.repository import ProductRepo
-from src.product.service import ProductService
-from src.product.schemas import ProductData
-from src.auth.schemas import JWTData
 from src.auth.dependencies import valid_jwt_token
+from src.auth.schemas import JWTData
 from src.product.exceptions import ProductPermissionDenied
+from src.product.repository import ProductRepo
+from src.product.schemas import ProductData
+from src.product.service import ProductService
 
 
 async def get_product_service(product_repo: ProductRepo = Depends()) -> ProductService:

@@ -9,6 +9,7 @@ from sqlalchemy import (
     Integer,
     String,
     Table,
+    UniqueConstraint,
     func,
 )
 
@@ -98,6 +99,7 @@ product_rating_tb = Table(
         index=True,
     ),
     Column("score", Integer, nullable=False),
+    UniqueConstraint("product_id", "user_id"),
 )
 
 product_review_tb = Table(

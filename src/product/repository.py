@@ -1,6 +1,6 @@
 from uuid import UUID
 
-from sqlalchemy import func, or_, select
+from sqlalchemy import and_, func, or_, select
 from sqlalchemy.sql import Select
 
 from src.database import database
@@ -25,11 +25,13 @@ class ProductRepo:
             select(
                 product_tb,
                 func.array_agg(category_tb.c.name).label("categories"),
+                product_rating_tb.c.score.label("my_rating_score"),
             )
             .select_from(product_tb)
             .join(product_category_tb)
             .join(category_tb)
-            .group_by(product_tb.c.id)
+            .join(product_rating_tb, isouter=True)
+            .group_by(product_tb.c.id, product_rating_tb.c.score)
         )
 
         if owner_id:
@@ -83,8 +85,19 @@ class ProductRepo:
     async def create_product_rating(
         self, user_id: UUID, product_id: int, score: int
     ) -> ProductRatingData:
-        insert_query = product_rating_tb.insert(
-            user_id=user_id, product_id=product_id, score=score
+        insert_query = (
+            product_rating_tb.insert()
+            .values(user_id=user_id, product_id=product_id, score=score)
+            .returning(product_rating_tb)
         )
         result = await database.fetch_one(insert_query)
         return ProductRatingData(**result._mapping)  # type: ignore
+
+    async def delete_product_rating(self, user_id: UUID, product_id: int) -> None:
+        delete_query = product_rating_tb.delete().where(
+            and_(
+                product_rating_tb.c.user_id == user_id,
+                product_rating_tb.c.product_id == product_id,
+            )
+        )
+        await database.execute(delete_query)
