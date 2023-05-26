@@ -2,7 +2,7 @@ from fastapi import APIRouter, Body, Depends, Query
 
 from src.auth.dependencies import valid_jwt_token
 from src.auth.schemas import JWTData
-from src.product.dependencies import get_product_service
+from src.product.dependencies import get_product_service, valid_product_id
 from src.product.schemas import ProductData
 from src.product.service import ProductService
 
@@ -16,9 +16,7 @@ async def get_products(
     offset: int = Query(default=0, ge=0),
     service: ProductService = Depends(get_product_service),
 ) -> list[ProductData]:
-    return await service.get_products(
-        search_keyword=search_keyword, size=size, offset=offset
-    )
+    return await service.get_products(search_keyword=search_keyword, size=size, offset=offset)
 
 
 @router.get("/me")
@@ -37,6 +35,11 @@ async def get_my_products(
     )
 
 
+@router.get("/{product_id}")
+async def get_product(product: ProductData = Depends(valid_product_id)) -> ProductData:
+    return product
+
+
 @router.post("/{product_id}/rating")
 async def rate_product(
     score: int = Body(embed=True, ge=1, lt=5),
@@ -44,6 +47,4 @@ async def rate_product(
     jwt_data: JWTData = Depends(valid_jwt_token),
     service: ProductService = Depends(get_product_service),
 ) -> ProductData:
-    return await service.rate_product(
-        product=product, user_id=jwt_data.user_id, score=score
-    )
+    return await service.rate_product(product=product, user_id=jwt_data.user_id, score=score)

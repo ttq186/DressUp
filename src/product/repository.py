@@ -70,6 +70,16 @@ class ProductRepo:
         results = await database.fetch_all(select_query)
         return [ProductData(**result._mapping) for result in results]
 
+    async def get_by_id_and_user_id(
+        self, product_id: int, user_id: UUID
+    ) -> ProductData | None:
+        select_query = await self.get_base_select_query()
+        select_query = select_query.where(product_tb.c.id == product_id).where(
+            or_(product_tb.c.owner_id == user_id, product_tb.c.is_public)
+        )
+        result = await database.fetch_one(select_query)
+        return ProductData(**result._mapping) if result else None
+
     async def create_product_rating(
         self, user_id: UUID, product_id: int, score: int
     ) -> ProductRatingData:
