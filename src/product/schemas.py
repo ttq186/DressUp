@@ -10,6 +10,7 @@ class ProductData(BaseModel):
     name: str
     description: str
     categories: list[str]
+    hashtags: list[str] | None
     brand: str | None
     material: str | None
     style: str | None

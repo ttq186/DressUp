@@ -28,6 +28,7 @@ product_tb = Table(
     ),
     Column("name", String, nullable=False),
     Column("description", String),
+    Column("hashtags", ARRAY(String)),
     Column("brand", String),
     Column("is_public", Boolean),
     Column("material", String),

@@ -33,9 +33,7 @@ app.add_middleware(
     allow_methods=("GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"),
     allow_headers=settings.CORS_HEADERS,
 )
-app.add_middleware(
-    GZipMiddleware, minimum_size=1000 
-)
+app.add_middleware(GZipMiddleware, minimum_size=1000)
 
 
 @app.get("/healthcheck", include_in_schema=False)

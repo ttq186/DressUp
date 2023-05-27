@@ -1,5 +1,5 @@
-from uuid import UUID
 import asyncio
+from uuid import UUID
 
 from sqlalchemy import and_, func, or_, select
 from sqlalchemy.sql import Select
@@ -8,8 +8,8 @@ from src.database import database
 from src.product.schemas import (
     CategoryData,
     ProductData,
-    ProductRatingData,
     ProductDatas,
+    ProductRatingData,
 )
 from src.product.table import (
     category_tb,
