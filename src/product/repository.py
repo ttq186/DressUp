@@ -66,7 +66,7 @@ class ProductRepo:
         return select_query
 
     @staticmethod
-    async def get_total_rows(
+    async def get_total_rows_query(
         owner_id: UUID | None = None,
         search_keyword: str | None = None,
     ) -> Select:
@@ -99,7 +99,7 @@ class ProductRepo:
         select_query = await self.get_base_select_query(
             owner_id=owner_id, search_keyword=search_keyword, offset=offset, size=size
         )
-        select_total_row_query = await self.get_total_rows(
+        select_total_row_query = await self.get_total_rows_query(
             owner_id=owner_id, search_keyword=search_keyword
         )
         results, total_rows = await asyncio.gather(

@@ -8,14 +8,14 @@ from jinja2 import Environment, FileSystemLoader
 from src.auth.config import settings
 
 
-def get_refresh_token_settings(refresh_token: str) -> dict[str, Any]:
+def get_refresh_token_settings(refresh_token: str, has_expired: bool = False) -> dict[str, Any]:
     base_cookies = {
         "key": "refreshToken",
         "httponly": True,
         "secure": settings.SECURE_COOKIES,
         "value": refresh_token,
         "samesite": "none",
-        "max_age": settings.REFRESH_TOKEN_EXPIRES_SECONDS,
+        "max_age": 0 if has_expired else settings.REFRESH_TOKEN_EXPIRES_SECONDS,
     }
     # if settings.SITE_DOMAIN != "localhost":
     #     base_cookies["domain"] = settings.SITE_DOMAIN

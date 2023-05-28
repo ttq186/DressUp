@@ -139,7 +139,9 @@ async def logout_user(
     service: AuthService = Depends(get_auth_service),
 ) -> None:
     await service.expire_refresh_token(user_id=refresh_token.user_id)
-    response.delete_cookie(key="refreshToken")
+    response.set_cookie(
+        **utils.get_refresh_token_settings(refresh_token=refresh_token.token, has_expired=True)
+    )
 
 
 @router.post("/presigned-urls/post")
