@@ -128,4 +128,5 @@ product_review_tb = Table(
         server_default=func.now(),
         onupdate=func.now(),
     ),
+    UniqueConstraint("product_id", "user_id"),
 )

@@ -8,7 +8,9 @@ from jinja2 import Environment, FileSystemLoader
 from src.auth.config import settings
 
 
-def get_refresh_token_settings(refresh_token: str, has_expired: bool = False) -> dict[str, Any]:
+def get_refresh_token_settings(
+    refresh_token: str, has_expired: bool = False
+) -> dict[str, Any]:
     base_cookies = {
         "key": "refreshToken",
         "httponly": True,

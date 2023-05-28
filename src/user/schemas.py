@@ -15,6 +15,7 @@ class UserData(BaseModel):
     first_name: str | None
     last_name: str | None
     full_name: str | None
+    avatar_url: str | None
     styles: list[str] | None
     gender: str | None
     bust: int | None
@@ -22,10 +23,10 @@ class UserData(BaseModel):
     hip: int | None
     weight: float | None
     height: float | None
-    role: UserRole
-    is_active: bool
-    is_activated: bool
-    auth_method: AuthMethod
+    role: UserRole | None
+    is_active: bool | None
+    is_activated: bool | None
+    auth_method: AuthMethod | None
     created_at: datetime | None
     updated_at: datetime | None
 

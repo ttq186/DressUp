@@ -51,12 +51,22 @@ async def valid_jwt_token_optional(
 
 
 async def valid_jwt_token(
-    token: JWTData | None = Depends(valid_jwt_token_optional),
+    jwt_data: JWTData | None = Depends(valid_jwt_token_optional),
 ) -> JWTData:
-    if not token:
+    if not jwt_data:
         raise AuthRequired()
 
-    return token
+    return jwt_data
+
+
+async def valid_user(
+    jwt_data: JWTData = Depends(valid_jwt_token),
+    user_repo: UserRepo = Depends(),
+) -> UserData:
+    user = await user_repo.get(id=jwt_data.user_id)
+    if not user:
+        raise InvalidToken()
+    return user
 
 
 async def valid_user_create(

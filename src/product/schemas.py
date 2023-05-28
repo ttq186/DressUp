@@ -1,7 +1,10 @@
 from datetime import datetime
 from uuid import UUID
 
+from pydantic import Field
+
 from src.schemas import BaseModel
+from src.user.schemas import UserData
 
 
 class ProductData(BaseModel):
@@ -52,3 +55,43 @@ class CategoryData(BaseModel):
     display_name: str | None
     created_at: datetime | None
     updated_at: datetime | None
+
+
+class ProductReviewCreate(BaseModel):
+    product_id: int | None = Field(hidden=True)
+    user_id: UUID | None = Field(hidden=True)
+    content: str
+
+
+class ProductReviewUpdate(BaseModel):
+    content: str
+
+
+class ProductReviewData(BaseModel):
+    id: int
+    author: UserData | None
+    product_id: int
+    rating_score: float | None
+    content: str
+    created_at: datetime | None
+    updated_at: datetime | None
+
+    class Config:
+        fields = {
+            "author": {
+                "exclude": {
+                    "password",
+                    "styles",
+                    "bust",
+                    "hip",
+                    "waist",
+                    "weight",
+                    "hip",
+                    "height",
+                    "role",
+                    "authMethod",
+                    "isActive",
+                    "isActivated",
+                }
+            }
+        }

@@ -10,18 +10,24 @@ from src.product.schemas import (
     ProductData,
     ProductDatas,
     ProductRatingData,
+    ProductReviewCreate,
+    ProductReviewData,
+    ProductReviewUpdate,
 )
 from src.product.table import (
     category_tb,
     product_category_tb,
     product_rating_tb,
+    product_review_tb,
     product_tb,
 )
+from src.user.schemas import UserData
+from src.user.table import user_tb
 
 
 class ProductRepo:
     @staticmethod
-    async def get_base_select_query(
+    def get_base_select_query(
         owner_id: UUID | None = None,
         search_keyword: str | None = None,
         offset: int | None = None,
@@ -66,7 +72,7 @@ class ProductRepo:
         return select_query
 
     @staticmethod
-    async def get_total_rows_query(
+    def get_total_rows_query(
         owner_id: UUID | None = None,
         search_keyword: str | None = None,
     ) -> Select:
@@ -96,10 +102,10 @@ class ProductRepo:
         offset: int | None = None,
         size: int | None = None,
     ) -> ProductDatas:
-        select_query = await self.get_base_select_query(
+        select_query = self.get_base_select_query(
             owner_id=owner_id, search_keyword=search_keyword, offset=offset, size=size
         )
-        select_total_row_query = await self.get_total_rows_query(
+        select_total_row_query = self.get_total_rows_query(
             owner_id=owner_id, search_keyword=search_keyword
         )
         results, total_rows = await asyncio.gather(
@@ -118,7 +124,7 @@ class ProductRepo:
     async def get_by_id_and_user_id(
         self, product_id: int, user_id: UUID
     ) -> ProductData | None:
-        select_query = await self.get_base_select_query()
+        select_query = self.get_base_select_query()
         select_query = select_query.where(product_tb.c.id == product_id).where(
             or_(product_tb.c.owner_id == user_id, product_tb.c.is_public)
         )
@@ -137,6 +143,74 @@ class ProductRepo:
         result = await database.fetch_one(select_query)
         return ProductRatingData(**result._mapping) if result else None
 
+    async def get_product_reviews(self, product_id: int) -> list[ProductReviewData]:
+        select_query = (
+            select(
+                product_review_tb,
+                user_tb.c.email,
+                user_tb.c.first_name,
+                user_tb.c.last_name,
+                user_tb.c.avatar_url,
+                product_rating_tb.c.score.label("rating_score"),
+            )
+            .select_from(product_review_tb)
+            .join(user_tb)
+            .join(product_rating_tb, isouter=True)
+            .where(
+                product_review_tb.c.product_id == product_id,
+            )
+            .order_by(product_review_tb.c.created_at.desc())
+        )
+        results = await database.fetch_all(select_query)
+        return [
+            ProductReviewData(
+                **result._mapping,
+                author=UserData(
+                    id=result._mapping["user_id"],
+                    email=result._mapping["email"],
+                    first_name=result._mapping["first_name"],
+                    last_name=result._mapping["last_name"],
+                    avatar_url=result._mapping["avatar_url"],
+                ),
+            )
+            for result in results
+        ]
+
+    async def get_product_review(
+        self, user_id: UUID, product_id: int
+    ) -> ProductReviewData | None:
+        select_query = (
+            select(
+                product_review_tb,
+                user_tb.c.email,
+                user_tb.c.first_name,
+                user_tb.c.last_name,
+                user_tb.c.avatar_url,
+            )
+            .join(user_tb)
+            .where(
+                and_(
+                    product_review_tb.c.product_id == product_id,
+                    product_review_tb.c.user_id == user_id,
+                )
+            )
+        )
+        result = await database.fetch_one(select_query)
+        return (
+            ProductReviewData(
+                **result._mapping,
+                author=UserData(
+                    id=result._mapping["user_id"],
+                    email=result._mapping["email"],
+                    first_name=result._mapping["first_name"],
+                    last_name=result._mapping["last_name"],
+                    avatar_url=result._mapping["avatar_url"],
+                ),
+            )
+            if result
+            else None
+        )
+
     async def create_product_rating(
         self, user_id: UUID, product_id: int, score: float
     ) -> ProductRatingData:
@@ -147,6 +221,17 @@ class ProductRepo:
         )
         result = await database.fetch_one(insert_query)
         return ProductRatingData(**result._mapping)  # type: ignore
+
+    async def create_product_review(
+        self, create_data: ProductReviewCreate
+    ) -> ProductReviewData:
+        insert_query = (
+            product_review_tb.insert()
+            .values(create_data.dict())
+            .returning(product_review_tb)
+        )
+        result = await database.fetch_one(insert_query)
+        return ProductReviewData(**result._mapping)  # type: ignore
 
     async def update_product_rating(
         self, user_id: UUID, product_id: int, score: float
@@ -165,11 +250,37 @@ class ProductRepo:
         result = await database.fetch_one(update_query)
         return ProductRatingData(**result._mapping)  # type: ignore
 
+    async def update_product_review(
+        self, user_id: UUID, product_id: int, update_data: ProductReviewUpdate
+    ) -> ProductReviewData:
+        update_query = (
+            product_review_tb.update()
+            .where(
+                and_(
+                    product_review_tb.c.user_id == user_id,
+                    product_review_tb.c.product_id == product_id,
+                )
+            )
+            .values(update_data.dict())
+            .returning(product_review_tb)
+        )
+        result = await database.fetch_one(update_query)
+        return ProductReviewData(**result._mapping)  # type: ignore
+
     async def delete_product_rating(self, user_id: UUID, product_id: int) -> None:
         delete_query = product_rating_tb.delete().where(
             and_(
                 product_rating_tb.c.user_id == user_id,
                 product_rating_tb.c.product_id == product_id,
+            )
+        )
+        await database.execute(delete_query)
+
+    async def delete_product_review(self, user_id: UUID, product_id: int) -> None:
+        delete_query = product_review_tb.delete().where(
+            and_(
+                product_review_tb.c.user_id == user_id,
+                product_review_tb.c.product_id == product_id,
             )
         )
         await database.execute(delete_query)
