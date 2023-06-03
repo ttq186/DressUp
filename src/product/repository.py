@@ -155,12 +155,20 @@ class ProductRepo:
             )
             .select_from(product_review_tb)
             .join(user_tb)
-            .join(product_rating_tb, isouter=True)
+            .join(
+                product_rating_tb,
+                isouter=True,
+                onclause=and_(
+                    product_review_tb.c.product_id == product_rating_tb.c.id,
+                    product_review_tb.c.user_id == product_rating_tb.c.user_id,
+                ),
+            )
             .where(
                 product_review_tb.c.product_id == product_id,
             )
             .order_by(product_review_tb.c.created_at.desc())
         )
+        print(select_query)
         results = await database.fetch_all(select_query)
         return [
             ProductReviewData(
