@@ -36,4 +36,5 @@ async def valid_product_review(
     )
     if not product_review:
         raise NotReviewedProductYet()
+    product_review.rating_score = product.my_rating_score
     return product_review

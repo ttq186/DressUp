@@ -112,7 +112,7 @@ async def get_product_reviews(
 
 
 @router.get(
-    "/{product_id}/reviews/me", response_model_exclude={"rating_score", "author"}
+    "/{product_id}/reviews/me", response_model_exclude={"author"}
 )
 async def get_my_product_review(
     product_review: ProductReviewData = Depends(valid_product_review),

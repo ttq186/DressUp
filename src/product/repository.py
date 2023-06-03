@@ -159,7 +159,7 @@ class ProductRepo:
                 product_rating_tb,
                 isouter=True,
                 onclause=and_(
-                    product_review_tb.c.product_id == product_rating_tb.c.id,
+                    product_review_tb.c.product_id == product_rating_tb.c.product_id,
                     product_review_tb.c.user_id == product_rating_tb.c.user_id,
                 ),
             )
@@ -168,7 +168,6 @@ class ProductRepo:
             )
             .order_by(product_review_tb.c.created_at.desc())
         )
-        print(select_query)
         results = await database.fetch_all(select_query)
         return [
             ProductReviewData(
