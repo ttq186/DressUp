@@ -29,6 +29,7 @@ class ProductRepo:
     @staticmethod
     def get_base_select_query(
         owner_id: UUID | None = None,
+        categories: list[str] | None = None,
         search_keyword: str | None = None,
         offset: int | None = None,
         size: int | None = None,
@@ -37,14 +38,21 @@ class ProductRepo:
             select(
                 product_tb,
                 func.array_agg(category_tb.c.name).label("categories"),
-                product_rating_tb.c.score.label("my_rating_score"),
             )
             .select_from(product_tb)
             .join(product_category_tb)
             .join(category_tb)
-            .join(product_rating_tb, isouter=True)
-            .group_by(product_tb.c.id, product_rating_tb.c.score)
+            .group_by(product_tb.c.id)
         )
+        if categories:
+            select_query = select_query.where(
+                or_(
+                    *[
+                        category_tb.c.name.ilike(f"%{category}%")
+                        for category in categories
+                    ]
+                )
+            )
 
         if owner_id:
             select_query = select_query.filter(product_tb.c.owner_id == owner_id)
@@ -68,23 +76,37 @@ class ProductRepo:
 
         if size:
             select_query = select_query.limit(size)
-
         return select_query
 
     @staticmethod
     def get_total_rows_query(
         owner_id: UUID | None = None,
+        categories: list[str] | None = None,
         search_keyword: str | None = None,
     ) -> Select:
-        select_query = select(func.count())
+        select_query = select(func.count()).select_from(product_tb)
+        if categories:
+            select_query = (
+                select_query.join(product_category_tb)
+                .join(category_tb)
+                .where(
+                    or_(
+                        *[
+                            category_tb.c.name.ilike(f"%{category}%")
+                            for category in categories
+                        ]
+                    )
+                )
+            )
+
         if owner_id:
-            select_query = select_query.filter(product_tb.c.owner_id == owner_id)
+            select_query = select_query.where(product_tb.c.owner_id == owner_id)
         else:
-            select_query = select_query.filter(product_tb.c.is_public)
+            select_query = select_query.where(product_tb.c.is_public)
 
         if search_keyword:
             ilike_pattern = f"%{search_keyword}%"
-            select_query = select_query.filter(
+            select_query = select_query.where(
                 or_(
                     product_tb.c.name.ilike(ilike_pattern),
                     product_tb.c.description.ilike(ilike_pattern),
@@ -98,15 +120,20 @@ class ProductRepo:
     async def get_multi(
         self,
         owner_id: UUID | None = None,
+        categories: list[str] | None = None,
         search_keyword: str | None = None,
         offset: int | None = None,
         size: int | None = None,
     ) -> ProductDatas:
         select_query = self.get_base_select_query(
-            owner_id=owner_id, search_keyword=search_keyword, offset=offset, size=size
+            owner_id=owner_id,
+            categories=categories,
+            search_keyword=search_keyword,
+            offset=offset,
+            size=size,
         )
         select_total_row_query = self.get_total_rows_query(
-            owner_id=owner_id, search_keyword=search_keyword
+            owner_id=owner_id, categories=categories, search_keyword=search_keyword
         )
         results, total_rows = await asyncio.gather(
             database.fetch_all(select_query), database.fetch_val(select_total_row_query)
@@ -124,7 +151,25 @@ class ProductRepo:
     async def get_by_id_and_user_id(
         self, product_id: int, user_id: UUID
     ) -> ProductData | None:
-        select_query = self.get_base_select_query()
+        select_query = (
+            select(
+                product_tb,
+                func.array_agg(category_tb.c.name).label("categories"),
+                product_rating_tb.c.score.label("my_rating_score"),
+            )
+            .select_from(product_tb)
+            .join(product_category_tb)
+            .join(category_tb)
+            .join(
+                product_rating_tb,
+                isouter=True,
+                onclause=and_(
+                    product_tb.c.id == product_rating_tb.c.product_id,
+                    product_rating_tb.c.user_id == user_id,
+                ),
+            )
+            .group_by(product_tb.c.id, product_rating_tb.c.score)
+        )
         select_query = select_query.where(product_tb.c.id == product_id).where(
             or_(product_tb.c.owner_id == user_id, product_tb.c.is_public)
         )

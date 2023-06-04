@@ -19,23 +19,33 @@ class ProductService:
     async def get_products(
         self,
         owner_id: UUID | None = None,
+        categories: list[str] | None = None,
         search_keyword: str | None = None,
         size: int = 20,
         offset: int = 0,
     ) -> ProductDatas:
         return await self.product_repo.get_multi(
-            owner_id=owner_id, search_keyword=search_keyword, size=size, offset=offset
+            owner_id=owner_id,
+            categories=categories,
+            search_keyword=search_keyword,
+            size=size,
+            offset=offset,
         )
 
     async def get_my_products(
         self,
         owner_id: UUID,
+        categories: list[str] | None = None,
         search_keyword: str | None = None,
         size: int = 20,
         offset: int = 0,
     ) -> ProductDatas:
         return await self.product_repo.get_multi(
-            owner_id=owner_id, search_keyword=search_keyword, size=size, offset=offset
+            owner_id=owner_id,
+            categories=categories,
+            search_keyword=search_keyword,
+            size=size,
+            offset=offset,
         )
 
     async def get_categories(self) -> list[CategoryData]:

@@ -22,20 +22,22 @@ from src.user.schemas import UserData
 router = APIRouter(prefix="/products", tags=["Products"])
 
 
-@router.get("")
+@router.get("", response_model_exclude_unset=True)
 async def get_products(
+    categories: list[str] = Query(default=[]),
     search_keyword: str | None = None,
     size: int = Query(default=20, ge=1),
     offset: int = Query(default=0, ge=0),
     service: ProductService = Depends(get_product_service),
 ) -> ProductDatas:
     return await service.get_products(
-        search_keyword=search_keyword, size=size, offset=offset
+        categories=categories, search_keyword=search_keyword, size=size, offset=offset
     )
 
 
-@router.get("/me")
+@router.get("/me", response_model_exclude_unset=True)
 async def get_my_products(
+    categories: list[str] = Query(default=[]),
     search_keyword: str | None = None,
     size: int = Query(default=20, ge=1),
     offset: int = Query(default=0, ge=0),
@@ -44,6 +46,7 @@ async def get_my_products(
 ) -> ProductDatas:
     return await service.get_products(
         owner_id=jwt_data.user_id,
+        categories=categories,
         search_keyword=search_keyword,
         size=size,
         offset=offset,
@@ -111,9 +114,7 @@ async def get_product_reviews(
     return await service.get_product_reviews(product_id=product.id)
 
 
-@router.get(
-    "/{product_id}/reviews/me", response_model_exclude={"author"}
-)
+@router.get("/{product_id}/reviews/me", response_model_exclude={"author"})
 async def get_my_product_review(
     product_review: ProductReviewData = Depends(valid_product_review),
 ) -> ProductReviewData:
