@@ -95,3 +95,9 @@ class ProductReviewData(BaseModel):
                 }
             }
         }
+
+
+class FilterOptions(BaseModel):
+    categories: list[str] = []
+    styles: list[str] = []
+    patterns: list[str] = []

@@ -9,7 +9,7 @@ from src.product.dependencies import (
 )
 from src.product.exceptions import AlreadyReviewedProduct, ProductNotRatedYet
 from src.product.schemas import (
-    CategoryData,
+    FilterOptions,
     ProductData,
     ProductDatas,
     ProductReviewCreate,
@@ -25,19 +25,28 @@ router = APIRouter(prefix="/products", tags=["Products"])
 @router.get("", response_model_exclude_unset=True)
 async def get_products(
     categories: list[str] = Query(default=[]),
+    styles: list[str] = Query(default=[]),
+    patterns: list[str] = Query(default=[]),
     search_keyword: str | None = None,
     size: int = Query(default=20, ge=1),
     offset: int = Query(default=0, ge=0),
     service: ProductService = Depends(get_product_service),
 ) -> ProductDatas:
     return await service.get_products(
-        categories=categories, search_keyword=search_keyword, size=size, offset=offset
+        categories=categories,
+        styles=styles,
+        patterns=patterns,
+        search_keyword=search_keyword,
+        size=size,
+        offset=offset,
     )
 
 
 @router.get("/me", response_model_exclude_unset=True)
 async def get_my_products(
     categories: list[str] = Query(default=[]),
+    styles: list[str] = Query(default=[]),
+    patterns: list[str] = Query(default=[]),
     search_keyword: str | None = None,
     size: int = Query(default=20, ge=1),
     offset: int = Query(default=0, ge=0),
@@ -47,18 +56,23 @@ async def get_my_products(
     return await service.get_products(
         owner_id=jwt_data.user_id,
         categories=categories,
+        styles=styles,
+        patterns=patterns,
         search_keyword=search_keyword,
         size=size,
         offset=offset,
     )
 
 
-@router.get("/categories")
-async def get_categories(
+@router.get("/filter-options")
+async def get_filter_options(
     jwt_data: JWTData = Depends(valid_jwt_token),
     service: ProductService = Depends(get_product_service),
-) -> list[CategoryData]:
-    return await service.get_categories()
+) -> FilterOptions:
+    categories = await service.get_categories()
+    styles = await service.get_styles()
+    patterns = await service.get_patterns()
+    return FilterOptions(categories=categories, styles=styles, patterns=patterns)
 
 
 @router.get("/{product_id}")

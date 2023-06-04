@@ -2,7 +2,6 @@ from uuid import UUID
 
 from src.product.repository import ProductRepo
 from src.product.schemas import (
-    CategoryData,
     ProductData,
     ProductDatas,
     ProductReviewCreate,
@@ -20,6 +19,8 @@ class ProductService:
         self,
         owner_id: UUID | None = None,
         categories: list[str] | None = None,
+        styles: list[str] | None = None,
+        patterns: list[str] | None = None,
         search_keyword: str | None = None,
         size: int = 20,
         offset: int = 0,
@@ -27,6 +28,8 @@ class ProductService:
         return await self.product_repo.get_multi(
             owner_id=owner_id,
             categories=categories,
+            styles=styles,
+            patterns=patterns,
             search_keyword=search_keyword,
             size=size,
             offset=offset,
@@ -36,6 +39,8 @@ class ProductService:
         self,
         owner_id: UUID,
         categories: list[str] | None = None,
+        styles: list[str] | None = None,
+        patterns: list[str] | None = None,
         search_keyword: str | None = None,
         size: int = 20,
         offset: int = 0,
@@ -43,13 +48,21 @@ class ProductService:
         return await self.product_repo.get_multi(
             owner_id=owner_id,
             categories=categories,
+            styles=styles,
+            patterns=patterns,
             search_keyword=search_keyword,
             size=size,
             offset=offset,
         )
 
-    async def get_categories(self) -> list[CategoryData]:
+    async def get_categories(self) -> list[str]:
         return await self.product_repo.get_categories()
+
+    async def get_styles(self) -> list[str]:
+        return await self.product_repo.get_styles()
+
+    async def get_patterns(self) -> list[str]:
+        return await self.product_repo.get_patterns()
 
     async def rate_product(
         self, user_id: UUID, product: ProductData, score: float

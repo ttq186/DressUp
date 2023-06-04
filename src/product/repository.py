@@ -6,7 +6,6 @@ from sqlalchemy.sql import Select
 
 from src.database import database
 from src.product.schemas import (
-    CategoryData,
     ProductData,
     ProductDatas,
     ProductRatingData,
@@ -30,6 +29,8 @@ class ProductRepo:
     def get_base_select_query(
         owner_id: UUID | None = None,
         categories: list[str] | None = None,
+        styles: list[str] | None = None,
+        patterns: list[str] | None = None,
         search_keyword: str | None = None,
         offset: int | None = None,
         size: int | None = None,
@@ -50,6 +51,21 @@ class ProductRepo:
                     *[
                         category_tb.c.name.ilike(f"%{category}%")
                         for category in categories
+                    ]
+                )
+            )
+
+        if styles:
+            select_query = select_query.where(
+                or_(*[product_tb.c.style.ilike(f"%{style}%") for style in styles])
+            )
+
+        if patterns:
+            select_query = select_query.where(
+                or_(
+                    *[
+                        product_tb.c.pattern.ilike(f"%{pattern}%")
+                        for pattern in patterns
                     ]
                 )
             )
@@ -82,6 +98,8 @@ class ProductRepo:
     def get_total_rows_query(
         owner_id: UUID | None = None,
         categories: list[str] | None = None,
+        styles: list[str] | None = None,
+        patterns: list[str] | None = None,
         search_keyword: str | None = None,
     ) -> Select:
         select_query = select(func.count()).select_from(product_tb)
@@ -96,6 +114,21 @@ class ProductRepo:
                             for category in categories
                         ]
                     )
+                )
+            )
+
+        if styles:
+            select_query = select_query.where(
+                or_(*[product_tb.c.style.ilike(f"%{style}%") for style in styles])
+            )
+
+        if patterns:
+            select_query = select_query.where(
+                or_(
+                    *[
+                        product_tb.c.pattern.ilike(f"%{pattern}%")
+                        for pattern in patterns
+                    ]
                 )
             )
 
@@ -121,6 +154,8 @@ class ProductRepo:
         self,
         owner_id: UUID | None = None,
         categories: list[str] | None = None,
+        styles: list[str] | None = None,
+        patterns: list[str] | None = None,
         search_keyword: str | None = None,
         offset: int | None = None,
         size: int | None = None,
@@ -128,12 +163,18 @@ class ProductRepo:
         select_query = self.get_base_select_query(
             owner_id=owner_id,
             categories=categories,
+            styles=styles,
+            patterns=patterns,
             search_keyword=search_keyword,
             offset=offset,
             size=size,
         )
         select_total_row_query = self.get_total_rows_query(
-            owner_id=owner_id, categories=categories, search_keyword=search_keyword
+            owner_id=owner_id,
+            categories=categories,
+            styles=styles,
+            patterns=patterns,
+            search_keyword=search_keyword,
         )
         results, total_rows = await asyncio.gather(
             database.fetch_all(select_query), database.fetch_val(select_total_row_query)
@@ -143,10 +184,43 @@ class ProductRepo:
             total_rows=total_rows,
         )
 
-    async def get_categories(self) -> list[CategoryData]:
-        select_query = category_tb.select()
+    async def get_categories(self) -> list[str]:
+        select_query = select(category_tb.c.name)
         results = await database.fetch_all(select_query)
-        return [CategoryData(**result._mapping) for result in results]
+        return [result._mapping["name"] for result in results]
+
+    async def get_styles(self) -> list[str]:
+        return [
+            "Cơ bản",
+            "Hàn Quốc",
+            "Thể thao",
+            "Đường phố",
+            "Công sở",
+            "Nhiệt đới",
+            "Tối giản",
+            "Unisex",
+            "Retro",
+            "Boho",
+            "Rách gối",
+            "Cổ điển",
+            "Sexy",
+        ]
+
+    async def get_patterns(self) -> list[str]:
+        return [
+            "In",
+            "Họa tiết",
+            "Trơn",
+            "Khác",
+            "Phụ kiện kèm",
+            "Sọc caro",
+            "Rách gối",
+            "Phối",
+            "Rách gấu",
+            "Form ôm",
+            "Chấm bi",
+            "Sọc",
+        ]
 
     async def get_by_id_and_user_id(
         self, product_id: int, user_id: UUID
