@@ -28,6 +28,7 @@ from src.user.table import user_tb
 class ProductRepo:
     @staticmethod
     def get_base_select_query(
+        ids: list[int] | None = None,
         owner_id: UUID | None = None,
         categories: list[str] | None = None,
         styles: list[str] | None = None,
@@ -46,6 +47,9 @@ class ProductRepo:
             .join(category_tb)
             .group_by(product_tb.c.id)
         )
+        if ids:
+            select_query = select_query.where(product_tb.c.id.in_(ids))
+
         if categories:
             select_query = select_query.where(
                 or_(
@@ -97,6 +101,7 @@ class ProductRepo:
 
     @staticmethod
     def get_total_rows_query(
+        ids: list[int] | None = None,
         owner_id: UUID | None = None,
         categories: list[str] | None = None,
         styles: list[str] | None = None,
@@ -104,6 +109,10 @@ class ProductRepo:
         search_keyword: str | None = None,
     ) -> Select:
         select_query = select(func.count()).select_from(product_tb)
+
+        if ids:
+            select_query = select_query.where(product_tb.c.id.in_(ids))
+
         if categories:
             select_query = (
                 select_query.join(product_category_tb)
@@ -153,6 +162,7 @@ class ProductRepo:
 
     async def get_multi(
         self,
+        ids: list[int] | None = None,
         owner_id: UUID | None = None,
         categories: list[str] | None = None,
         styles: list[str] | None = None,
@@ -162,6 +172,7 @@ class ProductRepo:
         size: int | None = None,
     ) -> ProductDatas:
         select_query = self.get_base_select_query(
+            ids=ids,
             owner_id=owner_id,
             categories=categories,
             styles=styles,
@@ -171,6 +182,7 @@ class ProductRepo:
             size=size,
         )
         select_total_row_query = self.get_total_rows_query(
+            ids=ids,
             owner_id=owner_id,
             categories=categories,
             styles=styles,

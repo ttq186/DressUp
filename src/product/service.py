@@ -1,5 +1,9 @@
 from uuid import UUID
 
+import httpx
+
+from src.closet.schemas import ClosetData
+from src.config import settings
 from src.product.repository import ProductRepo
 from src.product.schemas import (
     ProductCreate,
@@ -21,6 +25,7 @@ class ProductService:
 
     async def get_products(
         self,
+        ids: list[int] | None = None,
         owner_id: UUID | None = None,
         categories: list[str] | None = None,
         styles: list[str] | None = None,
@@ -30,6 +35,7 @@ class ProductService:
         offset: int = 0,
     ) -> ProductDatas:
         return await self.product_repo.get_multi(
+            ids=ids,
             owner_id=owner_id,
             categories=categories,
             styles=styles,
@@ -59,6 +65,36 @@ class ProductService:
             offset=offset,
         )
 
+    async def get_recommendations(
+        self,
+        closet: ClosetData,
+        include_public_products: bool,
+        size: int,
+    ) -> ProductDatas:
+        if include_public_products:
+            referenced_products = [*closet.owned_products, *closet.public_products]
+        else:
+            referenced_products = closet.owned_products
+
+        if not referenced_products:
+            return ProductDatas(products=[], total_rows=0)
+
+        referenced_product_img_urls = []
+        for product in referenced_products:
+            referenced_product_img_urls.extend(product.image_urls)
+
+        async with httpx.AsyncClient() as client:
+            response = await client.post(
+                url=f"{settings.AI_MODEL_URL}/recommendation",
+                json={
+                    "image_urls": referenced_product_img_urls,
+                    "num_of_recommended_products": size,
+                },
+                timeout=None,
+            )
+            recommended_product_ids = response.json()
+        return await self.get_products(ids=recommended_product_ids, size=size)
+
     async def get_categories(self) -> list[str]:
         return await self.product_repo.get_categories()
 
@@ -84,7 +120,7 @@ class ProductService:
             )
         return ProductData(
             **product.dict(exclude={"my_rating_score"}),
-            my_rating_score=product_rating.score
+            my_rating_score=product_rating.score,
         )
 
     async def unrate_product(self, user_id: UUID, product_id: int):

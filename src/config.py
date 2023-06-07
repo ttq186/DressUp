@@ -16,6 +16,8 @@ class Settings(BaseSettings):
 
     APP_VERSION: str = "1"
 
+    AI_MODEL_URL: str
+
 
 settings = Settings()
 

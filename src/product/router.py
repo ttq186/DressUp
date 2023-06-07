@@ -2,6 +2,8 @@ from fastapi import APIRouter, Body, Depends, Query, status
 
 from src.auth.dependencies import valid_jwt_token, valid_user
 from src.auth.schemas import JWTData
+from src.closet.dependencies import get_closet_service
+from src.closet.service import ClosetService
 from src.product.dependencies import (
     get_product_service,
     valid_product_create,
@@ -71,6 +73,22 @@ async def get_my_products(
         search_keyword=search_keyword,
         size=size,
         offset=offset,
+    )
+
+
+@router.get("/recommendation", response_model_exclude_unset=True)
+async def get_ai_recommended_products(
+    include_public_products: bool = False,
+    size: int = Query(default=20, ge=1),
+    jwt_data: JWTData = Depends(valid_jwt_token),
+    service: ProductService = Depends(get_product_service),
+    closet_service: ClosetService = Depends(get_closet_service),
+) -> ProductDatas:
+    closet = await closet_service.get_closet(owner_id=jwt_data.user_id)
+    return await service.get_recommendations(
+        closet=closet,
+        include_public_products=include_public_products,
+        size=size,
     )
 
 
