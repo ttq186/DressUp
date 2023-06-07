@@ -4,7 +4,7 @@ from src.auth.dependencies import valid_jwt_token
 from src.auth.schemas import JWTData
 from src.product.exceptions import NotReviewedProductYet, ProductPermissionDenied
 from src.product.repository import ProductRepo
-from src.product.schemas import ProductData, ProductReviewData
+from src.product.schemas import ProductCreate, ProductData, ProductReviewData
 from src.product.service import ProductService
 
 
@@ -24,6 +24,15 @@ async def valid_product_id(
         raise ProductPermissionDenied()
 
     return product
+
+
+async def valid_product_create(
+    product_create: ProductCreate,
+    jwt_data: JWTData = Depends(valid_jwt_token),
+) -> ProductCreate:
+    product_create.owner_id = jwt_data.user_id
+    product_create.is_public = False
+    return product_create
 
 
 async def valid_product_review(

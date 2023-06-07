@@ -6,6 +6,7 @@ from sqlalchemy.sql import Select
 
 from src.database import database
 from src.product.schemas import (
+    ProductCreate,
     ProductData,
     ProductDatas,
     ProductRatingData,
@@ -336,6 +337,13 @@ class ProductRepo:
             if result
             else None
         )
+
+    async def create_product(self, create_data: ProductCreate) -> ProductData:
+        insert_query = (
+            product_tb.insert().values(create_data.dict()).returning(product_tb)
+        )
+        result = await database.fetch_one(insert_query)
+        return ProductData(**result._mapping)  # type: ignore
 
     async def create_product_rating(
         self, user_id: UUID, product_id: int, score: float

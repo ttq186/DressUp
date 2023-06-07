@@ -2,6 +2,7 @@ from uuid import UUID
 
 from src.product.repository import ProductRepo
 from src.product.schemas import (
+    ProductCreate,
     ProductData,
     ProductDatas,
     ProductReviewCreate,
@@ -14,6 +15,9 @@ from src.user.schemas import UserData
 class ProductService:
     def __init__(self, product_repo: ProductRepo):
         self.product_repo = product_repo
+
+    async def create_product(self, create_data: ProductCreate) -> ProductData:
+        return await self.product_repo.create_product(create_data)
 
     async def get_products(
         self,

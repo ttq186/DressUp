@@ -11,15 +11,15 @@ class ProductData(BaseModel):
     id: int
     owner_id: UUID
     name: str
-    description: str
-    categories: list[str]
+    description: str | None
+    categories: list[str] | None
     hashtags: list[str] | None
     brand: str | None
     material: str | None
     style: str | None
     pattern: str | None
     my_rating_score: float | None
-    original_url: str
+    original_url: str | None
     transparent_background_image: str | None
     is_public: bool
     shopee_affiliate_url: str | None
@@ -36,7 +36,11 @@ class ProductDatas(BaseModel):
 
 
 class ProductCreate(BaseModel):
-    pass
+    owner_id: UUID | None = Field(hidden=True)
+    is_public: bool | None = Field(hidden=True)
+    name: str
+    description: str | None
+    image_urls: list[str]
 
 
 class ProductUpdate(BaseModel):

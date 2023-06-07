@@ -4,12 +4,14 @@ from src.auth.dependencies import valid_jwt_token, valid_user
 from src.auth.schemas import JWTData
 from src.product.dependencies import (
     get_product_service,
+    valid_product_create,
     valid_product_id,
     valid_product_review,
 )
 from src.product.exceptions import AlreadyReviewedProduct, ProductNotRatedYet
 from src.product.schemas import (
     FilterOptions,
+    ProductCreate,
     ProductData,
     ProductDatas,
     ProductReviewCreate,
@@ -20,6 +22,14 @@ from src.product.service import ProductService
 from src.user.schemas import UserData
 
 router = APIRouter(prefix="/products", tags=["Products"])
+
+
+@router.post("")
+async def create_product(
+    product_create: ProductCreate = Depends(valid_product_create),
+    service: ProductService = Depends(get_product_service),
+) -> ProductData:
+    return await service.create_product(create_data=product_create)
 
 
 @router.get("", response_model_exclude_unset=True)
