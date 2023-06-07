@@ -2,14 +2,17 @@ from fastapi import Depends
 
 from src.auth.dependencies import valid_jwt_token
 from src.auth.schemas import JWTData
+from src.closet.repository import ClosetRepo
 from src.product.exceptions import NotReviewedProductYet, ProductPermissionDenied
 from src.product.repository import ProductRepo
 from src.product.schemas import ProductCreate, ProductData, ProductReviewData
 from src.product.service import ProductService
 
 
-async def get_product_service(product_repo: ProductRepo = Depends()) -> ProductService:
-    return ProductService(product_repo)
+async def get_product_service(
+    product_repo: ProductRepo = Depends(), closet_repo: ClosetRepo = Depends()
+) -> ProductService:
+    return ProductService(product_repo=product_repo, closet_repo=closet_repo)
 
 
 async def valid_product_id(

@@ -2,6 +2,7 @@ from uuid import UUID
 
 import httpx
 
+from src.closet.repository import ClosetRepo
 from src.closet.schemas import ClosetData
 from src.config import settings
 from src.product.repository import ProductRepo
@@ -12,16 +13,30 @@ from src.product.schemas import (
     ProductReviewCreate,
     ProductReviewData,
     ProductReviewUpdate,
+    ProductUpdate,
 )
 from src.user.schemas import UserData
 
 
 class ProductService:
-    def __init__(self, product_repo: ProductRepo):
+    def __init__(self, product_repo: ProductRepo, closet_repo: ClosetRepo):
         self.product_repo = product_repo
+        self.closet_repo = closet_repo
 
     async def create_product(self, create_data: ProductCreate) -> ProductData:
-        return await self.product_repo.create_product(create_data)
+        new_product = await self.product_repo.create_product(create_data)
+        closet = await self.closet_repo.get_by_owner_id(owner_id=create_data.owner_id)  # type: ignore
+        await self.closet_repo.create_closet_items(
+            closet_id=closet.id, product_ids=[new_product.id]
+        )
+        return new_product
+
+    async def update_product(
+        self, product: ProductData, update_data: ProductUpdate
+    ) -> ProductData:
+        return await self.product_repo.update_product(
+            product_id=product.id, update_data=update_data
+        )
 
     async def get_products(
         self,
@@ -81,7 +96,7 @@ class ProductService:
 
         referenced_product_img_urls = []
         for product in referenced_products:
-            referenced_product_img_urls.append(product.image_urls[0])
+            referenced_product_img_urls.extend(product.image_urls)
 
         async with httpx.AsyncClient() as client:
             response = await client.post(

@@ -13,6 +13,7 @@ from src.product.schemas import (
     ProductReviewCreate,
     ProductReviewData,
     ProductReviewUpdate,
+    ProductUpdate,
 )
 from src.product.table import (
     category_tb,
@@ -378,6 +379,18 @@ class ProductRepo:
         )
         result = await database.fetch_one(insert_query)
         return ProductReviewData(**result._mapping)  # type: ignore
+
+    async def update_product(
+        self, product_id: int, update_data: ProductUpdate
+    ) -> ProductData:
+        update_query = (
+            product_tb.update()
+            .where(product_tb.c.id == product_id)
+            .values(update_data.dict(exclude_unset=True))
+            .returning(product_tb)
+        )
+        result = await database.fetch_one(update_query)
+        return ProductData(**result._mapping)  # type: ignore
 
     async def update_product_rating(
         self, user_id: UUID, product_id: int, score: float

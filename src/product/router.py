@@ -19,6 +19,7 @@ from src.product.schemas import (
     ProductReviewCreate,
     ProductReviewData,
     ProductReviewUpdate,
+    ProductUpdate,
 )
 from src.product.service import ProductService
 from src.user.schemas import UserData
@@ -106,6 +107,15 @@ async def get_filter_options(
 @router.get("/{product_id}")
 async def get_product(product: ProductData = Depends(valid_product_id)) -> ProductData:
     return product
+
+
+@router.put("/{product_id}")
+async def update_product(
+    product_update: ProductUpdate,
+    product: ProductData = Depends(valid_product_id),
+    service: ProductService = Depends(get_product_service),
+) -> ProductData:
+    return await service.update_product(product=product, update_data=product_update)
 
 
 @router.put("/{product_id}/rating")

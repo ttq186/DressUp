@@ -52,7 +52,21 @@ class ProductCreate(BaseModel):
 
 
 class ProductUpdate(BaseModel):
-    pass
+    name: str | None
+    description: str | None
+    categories: list[str] | None
+    hashtags: list[str] | None
+    brand: str | None
+    material: str | None
+    style: str | None
+    pattern: str | None
+    original_url: str | None
+    transparent_background_image: str | None
+    is_public: bool | None
+    shopee_affiliate_url: str | None
+    lazada_affiliate_url: str | None
+    tiktok_affiliate_url: str | None
+    image_urls: list[str] | None
 
 
 class ProductRatingData(BaseModel):

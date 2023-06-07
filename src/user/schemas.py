@@ -57,6 +57,7 @@ class UserUpdate(BaseModel):
     password: str | None
     first_name: str | None
     last_name: str | None
+    avatar_url: str | None
     gender: str | None
     styles: list[str] | None
     bust: int | None
