@@ -1,7 +1,7 @@
 from datetime import datetime
 from uuid import UUID
 
-from pydantic import Field
+from pydantic import Field, root_validator
 
 from src.schemas import BaseModel
 from src.user.schemas import UserData
@@ -28,6 +28,14 @@ class ProductData(BaseModel):
     image_urls: list[str]
     created_at: datetime | None
     updated_at: datetime | None
+
+    @root_validator(pre=True)
+    def ignore_none_categories(cls, values):
+        if values.get("categories"):
+            values["categories"] = [
+                category for category in values["categories"] if category
+            ]
+        return values
 
 
 class ProductDatas(BaseModel):
