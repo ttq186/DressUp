@@ -81,7 +81,7 @@ class ProductService:
 
         referenced_product_img_urls = []
         for product in referenced_products:
-            referenced_product_img_urls.extend(product.image_urls)
+            referenced_product_img_urls.append(product.image_urls[0])
 
         async with httpx.AsyncClient() as client:
             response = await client.post(
