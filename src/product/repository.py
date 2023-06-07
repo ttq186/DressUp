@@ -246,8 +246,8 @@ class ProductRepo:
                 product_rating_tb.c.score.label("my_rating_score"),
             )
             .select_from(product_tb)
-            .join(product_category_tb)
-            .join(category_tb)
+            .join(product_category_tb, isouter=True)
+            .join(category_tb, isouter=True)
             .join(
                 product_rating_tb,
                 isouter=True,
