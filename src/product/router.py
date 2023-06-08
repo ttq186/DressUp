@@ -120,7 +120,7 @@ async def update_product(
 
 @router.put("/{product_id}/rating")
 async def rate_product(
-    score: float = Body(embed=True, ge=0.5, lt=5),
+    score: float = Body(embed=True, ge=0.5, le=5),
     product: ProductData = Depends(valid_product_id),
     jwt_data: JWTData = Depends(valid_jwt_token),
     service: ProductService = Depends(get_product_service),
