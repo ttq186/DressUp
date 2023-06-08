@@ -77,3 +77,15 @@ class UserUpdate(BaseModel):
         if password is not None:
             return validate_strong_password(password)
         return None
+
+
+class ContactCreate(BaseModel):
+    user_id: UUID | None = Field(hidden=True)
+    message: str
+
+
+class ContactData(BaseModel):
+    user_id: UUID
+    message: str
+    created_at: datetime | None
+    updated_at: datetime | None

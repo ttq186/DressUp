@@ -3,6 +3,8 @@ from sqlalchemy import (
     Boolean,
     Column,
     DateTime,
+    ForeignKey,
+    Identity,
     Integer,
     LargeBinary,
     String,
@@ -39,6 +41,28 @@ user_tb = Table(
     Column("is_active", Boolean, server_default="true", nullable=False),
     Column("is_activated", Boolean, server_default="false", nullable=False),
     Column("auth_method", String, server_default="NORMAL", nullable=False),
+    Column(
+        "created_at", DateTime(timezone=True), server_default=func.now(), nullable=False
+    ),
+    Column(
+        "updated_at",
+        DateTime(timezone=True),
+        onupdate=func.now(),
+        server_default=func.now(),
+    ),
+)
+
+contact_tb = Table(
+    "contact",
+    metadata,
+    Column("id", Integer, Identity(), primary_key=True),
+    Column(
+        "user_id",
+        ForeignKey("user.id", ondelete="CASCADE"),
+        nullable=False,
+        index=True,
+    ),
+    Column("message", String, nullable=False),
     Column(
         "created_at", DateTime(timezone=True), server_default=func.now(), nullable=False
     ),

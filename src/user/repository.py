@@ -4,8 +4,14 @@ from sqlalchemy import insert, select
 
 from src.auth import security
 from src.database import database
-from src.user.schemas import UserCreate, UserData, UserUpdate
-from src.user.table import user_tb
+from src.user.schemas import (
+    ContactCreate,
+    ContactData,
+    UserCreate,
+    UserData,
+    UserUpdate,
+)
+from src.user.table import contact_tb, user_tb
 
 
 class UserRepo:
@@ -41,3 +47,10 @@ class UserRepo:
         )
         result = await database.fetch_one(update_query)
         return UserData(**result._mapping)  # type: ignore
+
+    async def create_contact(self, create_data: ContactCreate) -> ContactData:
+        insert_query = (
+            insert(contact_tb).values(create_data.dict()).returning(contact_tb)
+        )
+        result = await database.fetch_one(insert_query)
+        return ContactData(**result._mapping)  # type: ignore
