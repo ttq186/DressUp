@@ -108,7 +108,9 @@ class ProductService:
                 timeout=None,
             )
             recommended_product_ids = response.json()
-        return await self.get_products(ids=recommended_product_ids, size=size)
+        results = await self.get_products(ids=recommended_product_ids, size=size)
+        results.total_rows = 20
+        return results
 
     async def get_categories(self) -> list[str]:
         return await self.product_repo.get_categories()
