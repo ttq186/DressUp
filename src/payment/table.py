@@ -22,7 +22,7 @@ subscription = Table(
 )
 
 
-payment_history = Table(
+payment_history_tb = Table(
     "payment_history",
     metadata,
     Column("id", Integer, Identity(), primary_key=True),

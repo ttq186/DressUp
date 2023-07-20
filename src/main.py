@@ -4,6 +4,7 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.middleware.gzip import GZipMiddleware
 
+from src.admin.router import router as admin_router
 from src.auth.router import router as auth_router
 from src.closet.router import router as closet_router
 from src.config import app_configs, settings
@@ -42,6 +43,7 @@ async def healthcheck() -> dict[str, str]:
     return {"status": "ok"}
 
 
+app.include_router(admin_router)
 app.include_router(auth_router)
 app.include_router(user_router)
 app.include_router(product_router)

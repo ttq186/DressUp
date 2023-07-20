@@ -9,7 +9,7 @@ from src.auth.table import refresh_token_tb
 from src.user.table import user_tb
 from src.product.table import product_tb, product_category_tb, category_tb, product_rating_tb, product_review_tb
 from src.closet.table import closet_tb, closet_item_tb
-from src.payment.table import payment_history, subscription
+from src.payment.table import payment_history_tb, subscription
 
 
 
