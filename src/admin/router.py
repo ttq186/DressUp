@@ -11,7 +11,7 @@ router = APIRouter(prefix="/admin", tags=["Admin"])
 
 @router.get("/users", response_model_exclude={"password"})
 async def get_users(
-    jwt_data: JWTData = Depends(valid_admin_jwt_token),
+    # jwt_data: JWTData = Depends(valid_admin_jwt_token),
     search_keyword: str | None = None,
     subscription_type: SubscriptionType | None = None,
     is_active: bool | None = None,
